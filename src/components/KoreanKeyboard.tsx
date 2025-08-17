@@ -49,9 +49,9 @@ export default function KoreanKeyboard({
   const spaceGuide = isGuide(" ");
 
   return (
-    <div className="inline-block p-4 rounded-lg bg-gray-200">
-      {/* Row 1 */}
-      <div className="flex justify-center gap-2 mb-2">
+    <div className="w-full max-w-4xl mx-auto p-2 sm:p-4 rounded-lg bg-gray-200">
+      {/* Row 1 - 10 keys */}
+      <div className="flex justify-center gap-1 sm:gap-2 mb-1 sm:mb-2">
         {rows[0].map((k) => (
           <Key
             key={k}
@@ -63,8 +63,8 @@ export default function KoreanKeyboard({
         ))}
       </div>
 
-      {/* Row 2 */}
-      <div className="flex justify-center gap-2 mb-2">
+      {/* Row 2 - 9 keys */}
+      <div className="flex justify-center gap-1 sm:gap-2 mb-1 sm:mb-2">
         {rows[1].map((k) => (
           <Key
             key={k}
@@ -76,8 +76,8 @@ export default function KoreanKeyboard({
         ))}
       </div>
 
-      {/* Row 3 with Left/Right Shift */}
-      <div className="flex justify-center items-center gap-2 mb-2">
+      {/* Row 3 with Left/Right Shift - 7 keys + 2 shifts */}
+      <div className="flex justify-center items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
         <WideKey label="Shift" active={shiftActive} />
         {rows[2].map((k) => (
           <Key
@@ -92,18 +92,16 @@ export default function KoreanKeyboard({
       </div>
 
       {/* Bottom row: centered Space */}
-      <div className="flex items-center gap-2">
-        <div className="flex-1" />
+      <div className="flex items-center justify-center">
         <div
           className={[
-            "h-10 w-52 border rounded shadow transition-colors",
+            "h-8 sm:h-10 w-32 sm:w-52 md:w-64 border rounded shadow transition-colors",
             spaceActive ? "bg-blue-500" : "bg-white",
             spaceGuide && !spaceActive ? "ring-2 ring-amber-400" : "",
           ].join(" ")}
           aria-label="Space"
           title="Space"
         />
-        <div className="flex-1" />
       </div>
     </div>
   );
@@ -120,17 +118,18 @@ function Key({
   label: string;
   hw?: string;
 }) {
+  // Responsive key sizing: smaller on mobile, larger on desktop
   const base =
-    "w-10 h-12 flex flex-col items-center justify-center border rounded shadow transition-colors";
+    "w-6 h-8 sm:w-8 sm:h-10 md:w-10 md:h-12 lg:w-11 lg:h-13 xl:w-12 xl:h-14 flex flex-col items-center justify-center border rounded shadow transition-colors";
   const state = active ? "bg-blue-500 text-white" : "bg-white text-black";
   const guideRing = guide && !active ? "ring-2 ring-amber-400" : "";
 
   return (
     <div className={`${base} ${state} ${guideRing}`}>
-      <span className="text-lg font-bold leading-none">{label}</span>
+      <span className="text-xs sm:text-sm md:text-base lg:text-lg font-bold leading-none">{label}</span>
       {hw && (
         <span
-          className={`text-[10px] leading-none mt-1 ${
+          className={`text-[8px] sm:text-[10px] leading-none mt-0.5 sm:mt-1 ${
             active ? "text-white/80" : "text-gray-500"
           }`}
         >
@@ -144,7 +143,7 @@ function Key({
 function WideKey({ label, active }: { label: string; active: boolean }) {
   return (
     <div
-      className={`w-20 h-10 flex items-center justify-center border rounded shadow text-sm font-bold transition-colors ${
+      className={`w-12 h-8 sm:w-16 sm:h-10 md:w-20 md:h-12 flex items-center justify-center border rounded shadow text-xs sm:text-sm font-bold transition-colors ${
         active ? "bg-blue-500 text-white" : "bg-white"
       }`}
     >
