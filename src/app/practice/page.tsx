@@ -12,7 +12,7 @@ import { CompletionModal } from "@/components/practice/CompletionModal";
 import { PerformanceStats } from "@/components/practice/PerformanceStats";
 import { GuidanceMessage } from "@/components/practice/GuidanceMessage";
 import { splitTextIntoLines } from "@/utils/typing/textSplitting";
-import { useKoreanTyping } from "@/hooks/UseKoreanTyping";
+import { useKoreanTyping } from "@/hooks/useKoreanTyping";
 import { usePerformanceTracking } from "@/hooks/usePerformanceTracking";
 import { useLessonProgress } from "@/hooks/useLessonProgress";
 
