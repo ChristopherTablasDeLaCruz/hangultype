@@ -2,7 +2,7 @@
 // Main Korean typing practice interface
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, Suspense } from "react";
 import Link from "next/link";
 import KoreanKeyboard from "@/components/KoreanKeyboard";
 import { textToJamoSequence } from "@/utils/korean/decomposition";
@@ -16,7 +16,7 @@ import { useKoreanTyping } from "@/hooks/useKoreanTyping";
 import { usePerformanceTracking } from "@/hooks/usePerformanceTracking";
 import { useLessonProgress } from "@/hooks/useLessonProgress";
 
-export default function PracticePage() {
+function PracticePageContent() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Use lesson progress hook to manage current lesson state
@@ -278,5 +278,12 @@ export default function PracticePage() {
         hasNextLesson={lessonProgress.hasNextLesson}
       />
     </div>
+  );
+}
+export default function PracticePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PracticePageContent />
+    </Suspense>
   );
 }
