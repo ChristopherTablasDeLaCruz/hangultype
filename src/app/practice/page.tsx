@@ -1,497 +1,282 @@
-// apps/web/src/app/practice/page.tsx
+// src/app/practice/page.tsx
+// Main Korean typing practice interface
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import KoreanKeyboard from "@/components/KoreanKeyboard";
-
-/**
- * Korean Typing Practice page
- * Shows an on-screen keyboard, guides the next jamo, and tracks WPM/accuracy.
- */
-
-const FLASH_MS = 120; // how long a key stays "lit" after you press it (ms)
-
-// Physical QWERTY → jamo for live flashes
-const qwertyToHangul: Record<string, string> = {
-  KeyQ: "ㅂ",
-  KeyW: "ㅈ",
-  KeyE: "ㄷ",
-  KeyR: "ㄱ",
-  KeyT: "ㅅ",
-  KeyY: "ㅛ",
-  KeyU: "ㅕ",
-  KeyI: "ㅑ",
-  KeyO: "ㅐ",
-  KeyP: "ㅔ",
-  KeyA: "ㅁ",
-  KeyS: "ㄴ",
-  KeyD: "ㅇ",
-  KeyF: "ㄹ",
-  KeyG: "ㅎ",
-  KeyH: "ㅗ",
-  KeyJ: "ㅓ",
-  KeyK: "ㅏ",
-  KeyL: "ㅣ",
-  KeyZ: "ㅋ",
-  KeyX: "ㅌ",
-  KeyC: "ㅊ",
-  KeyV: "ㅍ",
-  KeyB: "ㅠ",
-  KeyN: "ㅜ",
-  KeyM: "ㅡ",
-};
-
-// hangul decomposition helpers
-// CHO(초성) = leading consonant, JUNG(중성) = vowel, JONG(종성) = trailing consonant.
-const CHO = [
-  "ㄱ",
-  "ㄲ",
-  "ㄴ",
-  "ㄷ",
-  "ㄸ",
-  "ㄹ",
-  "ㅁ",
-  "ㅂ",
-  "ㅃ",
-  "ㅅ",
-  "ㅆ",
-  "ㅇ",
-  "ㅈ",
-  "ㅉ",
-  "ㅊ",
-  "ㅋ",
-  "ㅌ",
-  "ㅍ",
-  "ㅎ",
-];
-const JUNG = [
-  "ㅏ",
-  "ㅐ",
-  "ㅑ",
-  "ㅒ",
-  "ㅓ",
-  "ㅔ",
-  "ㅕ",
-  "ㅖ",
-  "ㅗ",
-  "ㅘ",
-  "ㅙ",
-  "ㅚ",
-  "ㅛ",
-  "ㅜ",
-  "ㅝ",
-  "ㅞ",
-  "ㅟ",
-  "ㅠ",
-  "ㅡ",
-  "ㅢ",
-  "ㅣ",
-];
-const JONG = [
-  "",
-  "ㄱ",
-  "ㄲ",
-  "ㄳ",
-  "ㄴ",
-  "ㄵ",
-  "ㄶ",
-  "ㄷ",
-  "ㄹ",
-  "ㄺ",
-  "ㄻ",
-  "ㄼ",
-  "ㄽ",
-  "ㄾ",
-  "ㄿ",
-  "ㅀ",
-  "ㅁ",
-  "ㅂ",
-  "ㅄ",
-  "ㅅ",
-  "ㅆ",
-  "ㅇ",
-  "ㅈ",
-  "ㅊ",
-  "ㅋ",
-  "ㅌ",
-  "ㅍ",
-  "ㅎ",
-];
-
-/** Split a single Hangul syllable into its jamo components. */
-function decomposeSyllable(ch: string): string[] {
-  const code = ch.charCodeAt(0);
-  const base = 0xac00,
-    end = 0xd7a3; // Hangul Syllables block
-  if (code < base || code > end) return [ch]; // not a Hangul syllable
-
-  // Reverse the Unicode composition formula:
-  // index = (cho * 21 * 28) + (jung * 28) + jong
-  const s = code - base;
-  const cho = Math.floor(s / (21 * 28));
-  const jung = Math.floor((s % (21 * 28)) / 28);
-  const jong = s % 28;
-
-  const parts = [CHO[cho], JUNG[jung]];
-  if (JONG[jong]) parts.push(JONG[jong]); // add 종성 only if non-empty
-  return parts;
-}
-
-/** Expands a whole string into a flat jamo sequence (spaces preserved). */
-function jamoSequenceOf(text: string): string[] {
-  const out: string[] = [];
-  for (const ch of text) {
-    if (ch === " ") {
-      out.push(" ");
-      continue;
-    }
-    out.push(...decomposeSyllable(ch));
-  }
-  return out;
-}
-
-/** Compare typed vs target at the word level and return a small report. */
-function getWordAccuracy(typed: string, target: string) {
-  const typedWords = typed
-    .trim()
-    .split(/\s+/)
-    .filter((w) => w.length > 0);
-  const targetWords = target
-    .trim()
-    .split(/\s+/)
-    .filter((w) => w.length > 0);
-
-  if (targetWords.length === 0)
-    return {
-      accuracy: 100,
-      breakdown: [] as {
-        status: "correct" | "incorrect" | "typing" | "pending";
-        targetWord: string;
-        typedWord: string;
-        isCurrentlyTyping: boolean;
-      }[],
-      correctWords: 0,
-      totalWords: 0,
-    };
-
-  const breakdown = targetWords.map((targetWord, i) => {
-    const typedWord = typedWords[i];
-    if (typedWord === undefined) {
-      return {
-        status: "pending",
-        targetWord,
-        typedWord: "",
-        isCurrentlyTyping: false,
-      } as const;
-    }
-    if (typedWord === targetWord) {
-      return {
-        status: "correct",
-        targetWord,
-        typedWord,
-        isCurrentlyTyping: false,
-      } as const;
-    }
-
-    // Check if this is the word currently being typed
-    const isCurrentlyTyping =
-      i === typedWords.length - 1 && !typed.endsWith(" ") && i < targetWords.length;
-
-    return {
-      status: isCurrentlyTyping ? "typing" : "incorrect",
-      targetWord,
-      typedWord,
-      isCurrentlyTyping,
-    } as const;
-  });
-
-  const correctCount = breakdown.filter((w) => w.status === "correct").length;
-  const accuracy = Math.round((correctCount / targetWords.length) * 100);
-
-  return {
-    accuracy,
-    breakdown,
-    correctWords: correctCount,
-    totalWords: targetWords.length,
-  };
-}
-
-/** Character-by-character diff line */
-function CharDiffLine({ target, typed }: { target: string; typed: string }) {
-  return (
-    <div className="text-2xl leading-relaxed mb-3 font-mono">
-      {[...target].map((ch, i) => {
-        const t = typed[i];
-        const cls =
-          t === undefined ? "text-gray-300" : t === ch ? "text-green-500" : "text-red-500";
-        return (
-          <span key={i} className={cls}>
-            {ch}
-          </span>
-        );
-      })}
-    </div>
-  );
-}
+import { textToJamoSequence } from "@/utils/korean/decomposition";
+import { CharacterDisplay } from "@/components/practice/CharacterDisplay";
+import { LessonIntro } from "@/components/practice/LessonIntro";
+import { CompletionModal } from "@/components/practice/CompletionModal";
+import { PerformanceStats } from "@/components/practice/PerformanceStats";
+import { GuidanceMessage } from "@/components/practice/GuidanceMessage";
+import { splitTextIntoLines } from "@/utils/typing/textSplitting";
+import { useKoreanTyping } from "@/hooks/UseKoreanTyping";
+import { usePerformanceTracking } from "@/hooks/usePerformanceTracking";
+import { useLessonProgress } from "@/hooks/useLessonProgress";
 
 export default function PracticePage() {
-  // Lesson target
-  const targetText = "한글 타자 연습";
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // State
-  const [typedText, setTypedText] = useState("");
-  const [activeKeys, setActiveKeys] = useState<string[]>([]);
-  const [shiftActive, setShiftActive] = useState(false);
+  // Use lesson progress hook to manage current lesson state
+  const lessonProgress = useLessonProgress();
 
-  const [startTime, setStartTime] = useState<number | null>(null);
-  const [wpm, setWpm] = useState(0);
-
-  // Derived: target jamo sequence + current index
-  const targetJamoSeq = useMemo(() => jamoSequenceOf(targetText), [targetText]);
-  const [jamoIndex, setJamoIndex] = useState(0);
-
-  // Derived: word accuracy stats
-  const wordStats = useMemo(
-    () => getWordAccuracy(typedText, targetText),
-    [typedText, targetText]
+  // Break lesson text into manageable chunks
+  const textLines = useMemo(
+    () => splitTextIntoLines(lessonProgress.currentLesson.targetText),
+    [lessonProgress.currentLesson.targetText]
   );
 
-  //  Key flash timeouts 
-  const flashTimeoutsRef = useRef<Record<string, number>>({});
+  // Current line data
+  const currentLine = textLines[lessonProgress.currentLineIndex] || "";
+  const isComplexLine = currentLine.length > 50; // Adjust UI for long content
 
-  // Clear any pending flashes 
+  // Convert to individual Korean characters for precise tracking
+  const currentLineJamo = useMemo(
+    () => textToJamoSequence(currentLine),
+    [currentLine]
+  );
+
+  // Use typing and performance hooks
+  const typing = useKoreanTyping(currentLine, currentLineJamo);
+  const performance = usePerformanceTracking(
+    typing.currentLineTyped,
+    currentLine,
+    lessonProgress.currentLineIndex,
+    textLines
+  );
+
+  // State to track all typed text for WPM calculation
+  const [allTypedText, setAllTypedText] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Hide virtual keyboard on mobile devices where it's not helpful
   useEffect(() => {
-    return () => {
-      Object.values(flashTimeoutsRef.current).forEach((id) => clearTimeout(id));
+    const checkIfMobile = () => {
+      const width = window.innerWidth;
+      const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+      setIsMobile(width < 768 && isTouch);
     };
+
+    checkIfMobile();
+    window.addEventListener("resize", checkIfMobile);
+
+    return () => window.removeEventListener("resize", checkIfMobile);
   }, []);
 
-  // Flash a key briefly on the on-screen keyboard 
-  const flashKey = (jamo: string) => {
-    setActiveKeys((prev) => (prev.includes(jamo) ? prev : [...prev, jamo]));
-    if (flashTimeoutsRef.current[jamo]) clearTimeout(flashTimeoutsRef.current[jamo]);
-    flashTimeoutsRef.current[jamo] = window.setTimeout(() => {
-      setActiveKeys((prev) => prev.filter((k) => k !== jamo));
-      delete flashTimeoutsRef.current[jamo];
-    }, FLASH_MS);
-  };
-
-  // Keyboard events 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // track Shift visual state 
-    if (e.key === "Shift") {
-      setShiftActive(true);
-      return;
-    }
-
-    // Ignore Backspace (handled in onChange)
-    if (e.key === "Backspace") {
-      return;
-    }
-
-    // SPACE: flash and advance if expected
-    if (e.code === "Space") {
-      flashKey(" ");
-      if (targetJamoSeq[jamoIndex] === " ") {
-        setJamoIndex((i) => Math.min(i + 1, targetJamoSeq.length));
-      }
-      return;
-    }
-
-    // Letters: map physical key to jamo → flash → advance guide if it matches
-    const jamo = qwertyToHangul[e.code];
-    if (!jamo) return;
-
-    flashKey(jamo);
-
-    const expected = targetJamoSeq[jamoIndex];
-    if (expected && expected !== " " && jamo === expected) {
-      setJamoIndex((i) => Math.min(i + 1, targetJamoSeq.length));
-    }
-  };
-
-  const handleKeyUp = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Shift") setShiftActive(false);
-  };
-
-  // Input change (for handling backspace and full text)
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (startTime === null) setStartTime(Date.now());
-
-    const newTypedText = e.target.value;
-    const oldTypedText = typedText;
-
-    setTypedText(newTypedText);
-
-    // Detect if this was a backspace 
-    const wasBackspace = newTypedText.length < oldTypedText.length;
-
-    if (wasBackspace) {
-      // User deleted something - move index back to new end
-      const typedJamoSeq = jamoSequenceOf(newTypedText);
-      setJamoIndex(typedJamoSeq.length);
-    } else {
-      // User added text: only advance if last jamo matches whats expected at that position
-      const typedJamoSeq = jamoSequenceOf(newTypedText);
-      if (typedJamoSeq.length <= targetJamoSeq.length) {
-        const lastTypedJamo = typedJamoSeq[typedJamoSeq.length - 1];
-        const expectedJamo = targetJamoSeq[typedJamoSeq.length - 1];
-
-        if (lastTypedJamo === expectedJamo) {
-          setJamoIndex(typedJamoSeq.length);
-        }
-      }
-    }
-  };
-
-  // Stats calculation: recompute WPM after text changes
+  // Mark lesson as complete when user finishes all lines
   useEffect(() => {
-    if (!startTime) return;
+    const isLessonComplete =
+      lessonProgress.currentLineIndex >= textLines.length - 1 &&
+      typing.currentLineTyped === currentLine;
 
-    const elapsedMinutes = (Date.now() - startTime) / 1000 / 60;
-    // WPM based on correct words 
-    const newWpm = Math.max(0, Math.round(wordStats.correctWords / elapsedMinutes));
+    if (
+      isLessonComplete &&
+      !lessonProgress.completedLessons.includes(lessonProgress.currentLessonId)
+    ) {
+      // Small delay to allow user to see completion
+      const timer = setTimeout(() => {
+        lessonProgress.markLessonComplete(lessonProgress.currentLessonId);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [
+    lessonProgress.currentLineIndex,
+    typing.currentLineTyped,
+    currentLine,
+    textLines.length,
+    lessonProgress.currentLessonId,
+    lessonProgress.completedLessons,
+    lessonProgress,
+  ]);
 
-    setWpm(newWpm);
-  }, [typedText, startTime, wordStats.correctWords]);
+  // Move to next line when current line is finished
+  useEffect(() => {
+    if (
+      typing.currentLineTyped === currentLine &&
+      lessonProgress.currentLineIndex < textLines.length - 1
+    ) {
+      const timer = setTimeout(() => {
+        lessonProgress.advanceToNextLine();
+        typing.resetTyping(); // Clean slate for new line
+      }, 500); // pause for user to see completion
+      return () => clearTimeout(timer);
+    }
+  }, [
+    typing.currentLineTyped,
+    currentLine,
+    lessonProgress.currentLineIndex,
+    textLines.length,
+    typing,
+    lessonProgress,
+  ]);
 
-  //Guide the next expected jamo
-  const guideKeys = useMemo(() => {
-    const next = targetJamoSeq[jamoIndex];
-    return next ? [next] : [];
-  }, [targetJamoSeq, jamoIndex]);
+  // Handle input changes and track performance
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Start timing on first keystroke
+    performance.startTiming();
+
+    const newText = typing.handleInputChange(e);
+
+    // Update overall progress text for WPM calculation
+    setAllTypedText((prev) => {
+      const completedLines = textLines
+        .slice(0, lessonProgress.currentLineIndex)
+        .join(" ");
+      return completedLines + (completedLines ? " " : "") + newText;
+    });
+  };
+
+  // Reset everything for new lesson attempt
+  const handleTryAgain = () => {
+    lessonProgress.resetLessonState();
+    typing.resetTyping();
+    performance.resetTiming();
+    setAllTypedText("");
+    setTimeout(() => inputRef.current?.focus(), 100);
+  };
+
+  // Start typing when user clicks "Start Lesson"
+  const startTyping = () => {
+    lessonProgress.startTyping();
+    setTimeout(() => inputRef.current?.focus(), 100);
+  };
+
+  // Check if lesson is complete
+  const isLessonComplete =
+    lessonProgress.currentLineIndex >= textLines.length - 1 &&
+    typing.currentLineTyped === currentLine;
 
   return (
-    <div className="min-h-screen max-h-screen overflow-hidden flex flex-col p-4 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4 flex-shrink-0">
-        <h1 className="text-2xl font-bold text-gray-900">Korean Typing Practice</h1>
+    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
+      {/* Header with stats */}
+      <div className="flex-shrink-0 bg-white border-b border-gray-200 p-3">
+        <div className="flex items-center justify-between max-w-6xl mx-auto">
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl font-bold text-gray-900">
+              Korean Typing Practice
+            </h1>
 
-        {/* Compact stats */}
-        <div className="flex items-center gap-3 text-sm bg-gray-50 px-4 py-2 rounded-lg">
-          <div className="text-center">
-            <div className="text-base font-semibold text-blue-600">{wpm}</div>
-            <div className="text-xs text-gray-500">WPM</div>
+            <Link
+              href="/lessons"
+              className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors border border-blue-200"
+            >
+              <span>←</span>
+              <span>Lessons</span>
+            </Link>
           </div>
-          <div className="text-center">
-            <div className="text-base font-semibold text-green-600">{wordStats.accuracy}%</div>
-            <div className="text-xs text-gray-500">Accuracy</div>
-          </div>
-          <div className="text-center">
-            <div className="text-base font-semibold text-purple-600">
-              {wordStats.correctWords}/{wordStats.totalWords}
-            </div>
-            <div className="text-xs text-gray-500">Words</div>
-          </div>
-        </div>
-      </div>
 
-      {/* Target section */}
-      <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4 flex-shrink-0">
-        <CharDiffLine target={targetText} typed={typedText} />
-
-        {/* Word pills */}
-        <div className="flex gap-2 mb-3">
-          {wordStats.breakdown.map((word, index) => {
-            const getStatusColor = (status: string) => {
-              switch (status) {
-                case "correct":
-                  return "bg-green-500 text-white";
-                case "incorrect":
-                  return "bg-red-500 text-white";
-                case "typing":
-                  return "bg-blue-500 text-white animate-pulse";
-                default:
-                  return "bg-gray-200 text-gray-600";
-              }
-            };
-
-            const getStatusIcon = (status: string) => {
-              switch (status) {
-                case "correct":
-                  return "✓";
-                case "incorrect":
-                  return "✗";
-                case "typing":
-                  return "●";
-                default:
-                  return "○";
-              }
-            };
-
-            return (
-              <div
-                key={index}
-                className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                  word.status
-                )}`}
-              >
-                <span className="mr-1">{getStatusIcon(word.status)}</span>
-                {word.targetWord}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Progress bar */}
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-sm font-medium text-gray-600">Progress</span>
-          <span className="text-sm text-gray-500">
-            {wordStats.correctWords} of {wordStats.totalWords} completed
-          </span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-3">
-          <div
-            className="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all duration-500"
-            style={{
-              width: typedText.length === 0 ? "0%" : `${wordStats.accuracy}%`,
-            }}
+          {/* Performance stats */}
+          <PerformanceStats
+            wpm={performance.wpm}
+            accuracy={performance.accuracy}
+            progress={performance.overallProgress}
           />
         </div>
       </div>
 
-      {/* Input */}
-      <input
-        type="text"
-        className="w-full p-4 text-xl border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-4 flex-shrink-0 bg-white shadow-sm"
-        value={typedText}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        onKeyUp={handleKeyUp}
-        placeholder="Start typing the Korean text above..."
-      />
+      {/* Main practice area */}
+      <div className="flex-1 flex flex-col max-w-6xl mx-auto w-full p-4 min-h-0">
+        {/* Lesson intro modal */}
+        <LessonIntro
+          lesson={lessonProgress.currentLesson}
+          currentLineIndex={lessonProgress.currentLineIndex}
+          totalLines={textLines.length}
+          onStart={startTyping}
+          isVisible={lessonProgress.showLessonIntro}
+        />
 
-      {/* Keyboard */}
-      <div className="flex-1 flex items-center justify-center min-h-0">
-        <div className="transform scale-110 origin-center">
-          <KoreanKeyboard activeKeys={activeKeys} guideKeys={guideKeys} shiftActive={shiftActive} />
-        </div>
-      </div>
+        {/* Practice interface */}
+        {!lessonProgress.showLessonIntro && (
+          <>
+            {/* lesson header with guidance message */}
+            <div className="flex-shrink-0 mb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <h2 className="text-lg font-bold text-gray-900">
+                    {lessonProgress.currentLesson.title}
+                  </h2>
 
-      {/* Completion overlay */}
-      {typedText === targetText && (
-        <div className="fixed top-4 left-4 right-4 bg-gradient-to-r from-green-400 to-blue-500 text-white p-4 rounded-lg text-center shadow-lg z-10 max-w-4xl mx-auto">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <div className="text-lg font-bold">🎉 Perfect! Lesson Complete!</div>
-              <div className="text-sm opacity-90">
-                You achieved {wpm} WPM with {wordStats.accuracy}% accuracy
+                  {/* Guidance message next to title - disabled on mobile to prevent layout shifts */}
+                  <GuidanceMessage
+                    message={isMobile ? undefined : typing.guidanceMessage}
+                  />
+                </div>
+
+                <div className="text-sm text-gray-500">
+                  Line {lessonProgress.currentLineIndex + 1} of{" "}
+                  {textLines.length}
+                </div>
               </div>
             </div>
-            <button
-              onClick={() => {
-                setTypedText("");
-                setStartTime(null);
-                setJamoIndex(0);
-                setActiveKeys([]);
-              }}
-              className="ml-4 px-4 py-2 bg-white text-blue-600 rounded-lg text-sm font-bold hover:bg-gray-100 transition-colors shadow-sm border"
-            >
-              Try Again
-            </button>
-          </div>
-        </div>
-      )}
+
+            {/* Current text to type */}
+            <div className="flex-shrink-0 mb-3">
+              <CharacterDisplay
+                targetText={currentLine}
+                typedText={typing.currentLineTyped}
+                jamoIndex={typing.jamoIndex}
+                isCompact={isComplexLine}
+              />
+            </div>
+
+            {/* Input field */}
+            <div className="flex-shrink-0 mb-3">
+              <input
+                ref={inputRef}
+                type="text"
+                className={`
+                  w-full ${
+                    isComplexLine ? "p-2 text-lg" : "p-4 text-xl"
+                  } border-2 border-gray-300
+                  rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                  bg-white text-black shadow-sm [font-size:16px]
+                `}
+                value={typing.currentLineTyped}
+                onChange={handleInputChange}
+                onKeyDown={typing.handleKeyDown}
+                onKeyUp={typing.handleKeyUp}
+                placeholder="Start typing the Korean text above..."
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+                data-form-type="other"
+                name="korean-practice"
+              />
+            </div>
+
+            {/* Korean keyboard - hide on mobile devices */}
+            {!isMobile && (
+              <div className="flex-1 flex items-end pb-6">
+                <div className="w-full">
+                  <KoreanKeyboard
+                    activeKeys={typing.activeKeys}
+                    guideKeys={typing.nextExpectedKey}
+                    focusKeys={lessonProgress.currentLesson.focusKeys}
+                    shiftActive={typing.shiftPressed}
+                    isCompact={false}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Mobile spacing when keyboard is hidden */}
+            {isMobile && <div className="pb-6" />}
+          </>
+        )}
+      </div>
+
+      {/* Lesson completion celebration */}
+      <CompletionModal
+        isVisible={isLessonComplete}
+        wpm={performance.wpm}
+        accuracy={performance.accuracy}
+        onTryAgain={handleTryAgain}
+        onNextLesson={lessonProgress.handleNextLesson}
+        hasNextLesson={lessonProgress.hasNextLesson}
+      />
     </div>
   );
 }
