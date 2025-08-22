@@ -2,26 +2,17 @@
 
 An interactive web app that helps people learn to type in Korean! Built with React and TypeScript.
 
-![Korean Typing Practice Demo]()
-![Mobile Experience]()
+## Demo
 
-**[Try it yourself - hangultype.vercel.app](https://hangultype.vercel.app/)**
+### Desktop
+![Desktop Demo](assets/hangultype-desktop-demo-2x.gif)
 
-## Why I Built This
+▶️ [Watch full demo (higher quality, same video)](https://youtu.be/UuQhGMH6BvU)
 
-As someone interested in Korean language learning, I noticed that existing typing tutors didn't offer Korean or had interfaces entirely in Korean. Korean is unique because each "letter" is actually made up of multiple parts that combine together.
+### Mobile
+![Mobile Demo](assets/hangultype-mobile-demo-2x.gif)
 
-For example, the character `한` is made from three pieces: `ㅎ` + `ㅏ` + `ㄴ`. This makes typing in Korean way more complex than English, so I wanted to build something that could actually teach this properly.
-
-## ✨ Key Features
-
-🔤 **Smart Character Analysis** - Real-time Korean syllable decomposition using Unicode mathematics  
-🎯 **Intelligent Guidance** - Context-aware hints for complex characters like "Hold Shift, then press ㅂ for ㅃ"  
-📊 **Performance Tracking** - Live WPM calculation and accuracy monitoring  
-⌨️ **Visual Keyboard** - Interactive Korean keyboard with real-time highlighting  
-📱 **Mobile Optimized** - Responsive design that works seamlessly on phones and tablets  
-💾 **Progress Persistence** - Automatically saves your lesson progress locally  
-🎓 **Structured Learning** - Progressive lessons from basic vowels to complex character combinations  
+▶️ [Watch full demo (higher quality, same video)](https://youtu.be/CoKIRbuFOO0)
 
 ## 🎮 Try It Now
 
@@ -38,6 +29,22 @@ For example, the character `한` is made from three pieces: `ㅎ` + `ㅏ` + `ㄴ
 - **Basic Consonants** → Practice `ㄱ ㄴ ㄷ ㅁ ㅂ ㅅ` 
 - **Complex Vowel Patterns** → Master combinations like `ㅘ ㅙ ㅢ`
 - **Double Consonants** → Advanced shift combinations `ㄲ ㄸ ㅃ ㅆ ㅉ`
+
+## Why I Built This
+
+As someone interested in Korean language learning, I noticed that existing typing tutors didn't offer Korean or had interfaces entirely in Korean. Korean is unique because each "letter" is actually made up of multiple parts that combine together.
+
+For example, the character `한` is made from three pieces: `ㅎ` + `ㅏ` + `ㄴ`. This makes typing in Korean way more complex than English, so I wanted to build something that could actually teach this properly.
+
+## ✨ Key Features
+
+🔤 **Smart Character Analysis** - Real-time Korean syllable decomposition using Unicode mathematics  
+🎯 **Intelligent Guidance** - Context-aware hints for complex characters like "Hold Shift, then press ㅂ for ㅃ"  
+📊 **Performance Tracking** - Live WPM calculation and accuracy monitoring  
+⌨️ **Visual Keyboard** - Interactive Korean keyboard with real-time highlighting  
+📱 **Mobile Optimized** - Responsive design that works seamlessly on phones and tablets  
+💾 **Progress Persistence** - Automatically saves your lesson progress locally  
+🎓 **Structured Learning** - Progressive lessons from basic vowels to complex character combinations  
 
 ## 🛠️ Technologies Used
 
