@@ -10,7 +10,7 @@ export default function Home() {
           Master Korean typing with interactive lessons and real-time feedback
         </p>
         <Link
-          href="/practice"
+          href="/lessons"
           className="inline-block px-8 py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
         >
           Start Practicing →
