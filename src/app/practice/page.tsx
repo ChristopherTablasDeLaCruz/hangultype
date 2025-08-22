@@ -51,6 +51,13 @@ function PracticePageContent() {
   const [allTypedText, setAllTypedText] = useState("");
   const [isMobile, setIsMobile] = useState(false);
 
+  // Reset typing state when lesson changes
+  useEffect(() => {
+    typing.resetTyping();
+    performance.resetTiming();
+    setAllTypedText("");
+  }, [lessonProgress.currentLessonId]);
+
   // Hide virtual keyboard on mobile devices where it's not helpful
   useEffect(() => {
     const checkIfMobile = () => {
