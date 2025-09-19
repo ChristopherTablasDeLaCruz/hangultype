@@ -14,7 +14,7 @@ An interactive web app that helps people learn to type in Korean! Built with Rea
 
 ▶️ [Watch full demo (higher quality, same video)](https://youtu.be/CoKIRbuFOO0)
 
-## 🎮 Try It Now
+## Try It Now
 
 **[Live Demo - hangultype.vercel.app](https://hangultype.vercel.app/)**
 
@@ -36,17 +36,17 @@ As someone interested in Korean language learning, I noticed that existing typin
 
 For example, the character `한` is made from three pieces: `ㅎ` + `ㅏ` + `ㄴ`. This makes typing in Korean way more complex than English, so I wanted to build something that could actually teach this properly.
 
-## ✨ Key Features
+## Key Features
 
-🔤 **Smart Character Analysis** - Real-time Korean syllable decomposition using Unicode mathematics  
-🎯 **Intelligent Guidance** - Context-aware hints for complex characters like "Hold Shift, then press ㅂ for ㅃ"  
-📊 **Performance Tracking** - Live WPM calculation and accuracy monitoring  
-⌨️ **Visual Keyboard** - Interactive Korean keyboard with real-time highlighting  
-📱 **Mobile Optimized** - Responsive design that works seamlessly on phones and tablets  
-💾 **Progress Persistence** - Automatically saves your lesson progress locally  
-🎓 **Structured Learning** - Progressive lessons from basic vowels to complex character combinations  
+**Smart Character Analysis** - Real-time Korean syllable decomposition using Unicode mathematics  
+**Intelligent Guidance** - Context-aware hints for complex characters like "Hold Shift, then press ㅂ for ㅃ"  
+**Performance Tracking** - Live WPM calculation and accuracy monitoring  
+⌨**Visual Keyboard** - Interactive Korean keyboard with real-time highlighting  
+**Mobile Optimized** - Responsive design that works seamlessly on phones and tablets  
+**Progress Persistence** - Automatically saves your lesson progress locally  
+**Structured Learning** - Progressive lessons from basic vowels to complex character combinations  
 
-## 🛠️ Technologies Used
+## Technologies Used
 
 - **React 18** - For the interactive user interface
 - **Next.js** - React framework with file-based routing
@@ -54,7 +54,7 @@ For example, the character `한` is made from three pieces: `ㅎ` + `ㅏ` + `ㄴ
 - **Tailwind CSS** - For responsive styling and design
 - **Custom React Hooks** - Clean separation of business logic and UI
 
-## ⚡ Performance & Compatibility
+## Performance & Compatibility
 
 - **Real-time character analysis** 
 - **Cross-browser compatible** 
@@ -106,7 +106,7 @@ I organized the code using modern React patterns to keep everything maintainable
     └── textSplitting.ts   # Lesson text segmentation
 ```
 
-## 🧠 What I Learned
+## What I Learned
 
 Building this project taught me a lot about several complex technical areas:
 
@@ -129,7 +129,7 @@ Building this project taught me a lot about several complex technical areas:
 - State synchronization for multiple interdependent UI updates
 - Memory management for extended practice sessions
 
-## 🗺️ Future Ideas
+## Future Ideas
 
 ### Next Features I'm Planning:
 - **Full sentence practice** with common Korean phrases and grammar patterns
@@ -143,4 +143,4 @@ Building this project taught me a lot about several complex technical areas:
 
 ---
 
-*Thanks for checking out my project! I hope this helps make it fun and intuitive. 화이팅! 💪*
+*Thanks for checking out my project! I hope this helps make it fun and intuitive. 화이팅!*
