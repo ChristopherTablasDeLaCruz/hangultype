@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+:root {
+  /* Default to Deep Onyx theme regardless of system preference */
+  --background: #020617; /* Slate-950 */
+  --foreground: #f8fafc; /* Slate-50 */
+}
+
+@layer utilities {
+  .animate-float-slow {
+    animation: float-vertical 25s linear infinite;
+  }
+  .animate-float-fast {
+    animation: float-vertical 15s linear infinite;
+  }
+
+  @keyframes float-vertical {
+    0% { 
+      transform: translateY(110vh) rotate(0deg); 
+      opacity: 0; 
+    }
+    15% { 
+      opacity: 0.7;
+    }
+    85% { 
+      opacity: 0.7;
+    }
+    100% { 
+      transform: translateY(-15vh) rotate(360deg); 
+      opacity: 0; 
+    }
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+  
+  /* Extend animations  */
+  --animate-caret: caret-blink 1.5s ease-in-out infinite;
+
+  @keyframes caret-blink {
+    0%, 100% { opacity: 1; transform: scaleY(1); }
+    50% { opacity: 0.5; transform: scaleY(0.85); }
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  /* Apply the Radial Gradient globally */
+  background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #020617 70%);
+  background-attachment: fixed; /* Keeps gradient stable during scroll */
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* UI Utility: Glassmorphism */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.4); /* Slate-900 at 40% */
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Prevent zoom on input focus on iOS */
+@supports (-webkit-touch-callout: none) {
+  input[type="text"] {
+    font-size: 16px !important;
+  }
+}
