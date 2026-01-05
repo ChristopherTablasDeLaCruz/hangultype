@@ -8,7 +8,8 @@ from .models import AttemptCreate
 app = FastAPI(title="HangulType API")
 
 origins = [
-    "*"
+    "http://localhost:3000",
+    "https://hangultype.vercel.app",
 ]
 app.add_middleware(
     CORSMiddleware,
