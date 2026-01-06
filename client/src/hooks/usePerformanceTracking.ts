@@ -94,7 +94,7 @@ export function usePerformanceTracking() {
     const durationMin = Math.max(durationMs / 60000, 0.001);
 
     // Calculate WPM based on characters typed so far
-    const wpm = calculateWPM(currentTextTyped.length, durationMin);
+    const wpm = calculateWPM(totalKeystrokes, durationMin);
     
     // Calculate Accuracy based on keystrokes
     const accuracy = calculateKeystrokeAccuracy(totalKeystrokes, errorCount);
