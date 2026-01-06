@@ -41,10 +41,18 @@ export default function LoginPage() {
 
   const handleSignUp = async () => {
     setLoading(true)
+
+    const redirectTo = `${window.location.origin}/auth/callback`
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { username: email.split('@')[0] } },
+      options: { 
+        emailRedirectTo: redirectTo,
+        data: { 
+          username: email.split('@')[0] 
+        },
+      },
     })
     if (error) alert(error.message)
     else alert('Check your email for confirmation!')
