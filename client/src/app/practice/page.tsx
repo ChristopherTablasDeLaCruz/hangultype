@@ -22,12 +22,15 @@ function PracticePageContent() {
   // --- Hooks & Data ---
   const lessonProgress = useLessonProgress();
   const targetText = lessonProgress.currentLesson?.targetText || "";
-  
+
   const textLines = useMemo(() => splitTextIntoLines(targetText), [targetText]);
   const currentLine = textLines[lessonProgress.currentLineIndex] || "";
-  const isComplexLine = currentLine.length > 50; 
+  const isComplexLine = currentLine.length > 50;
 
-  const currentLineJamo = useMemo(() => textToJamoSequence(currentLine), [currentLine]);
+  const currentLineJamo = useMemo(
+    () => textToJamoSequence(currentLine),
+    [currentLine],
+  );
 
   const typing = useKoreanTyping(currentLine, currentLineJamo);
 
@@ -89,16 +92,24 @@ function PracticePageContent() {
   const isLessonComplete =
     lessonProgress.currentLineIndex >= textLines.length - 1 &&
     typing.currentLineTyped === currentLine &&
-    currentLine !== ""; 
+    currentLine !== "";
 
   useEffect(() => {
-    if (isLessonComplete && !hasSubmittedAttempt.current && !lessonProgress.isLoading) {
+    if (
+      isLessonComplete &&
+      !hasSubmittedAttempt.current &&
+      !lessonProgress.isLoading
+    ) {
       console.log("Lesson Complete! Submitting...");
       hasSubmittedAttempt.current = true;
       endTracking();
       submitAttempt(lessonProgress.currentLessonId);
 
-      if (!lessonProgress.completedLessons.includes(lessonProgress.currentLessonId)) {
+      if (
+        !lessonProgress.completedLessons.includes(
+          lessonProgress.currentLessonId,
+        )
+      ) {
         const timer = setTimeout(() => {
           lessonProgress.markLessonComplete(lessonProgress.currentLessonId);
         }, 1000);
@@ -108,7 +119,11 @@ function PracticePageContent() {
   }, [isLessonComplete, lessonProgress, submitAttempt, endTracking]);
 
   useEffect(() => {
-    if (typing.currentLineTyped === currentLine && lessonProgress.currentLineIndex < textLines.length - 1 && currentLine !== "") {
+    if (
+      typing.currentLineTyped === currentLine &&
+      lessonProgress.currentLineIndex < textLines.length - 1 &&
+      currentLine !== ""
+    ) {
       const timer = setTimeout(() => {
         lessonProgress.advanceToNextLine();
         typing.resetTyping();
@@ -122,7 +137,9 @@ function PracticePageContent() {
     startTracking();
     const newText = typing.handleInputChange(e);
     setAllTypedText((prev) => {
-      const completedLines = textLines.slice(0, lessonProgress.currentLineIndex).join(" ");
+      const completedLines = textLines
+        .slice(0, lessonProgress.currentLineIndex)
+        .join(" ");
       return completedLines + (completedLines ? " " : "") + newText;
     });
   };
@@ -136,8 +153,8 @@ function PracticePageContent() {
 
     if (isEnglishLetter && !isModifierPressed) {
       setShowWarning(true);
-      // We allow the typing to proceed so useKoreanTyping can handle it 
-      // (usually by ignoring it or treating it as error), 
+      // We allow the typing to proceed so useKoreanTyping can handle it
+      // (usually by ignoring it or treating it as error),
       // but the warning will appear.
     } else {
       // If they type a valid key (not English letter), hide the warning
@@ -148,8 +165,8 @@ function PracticePageContent() {
     // --- KEYBOARD DETECTION LOGIC END ---
 
     startTracking();
-    if (e.key !== 'Shift' && e.key !== 'Tab') incrementKeystrokes();
-    if (e.key === 'Backspace') incrementErrors();
+    if (e.key !== "Shift" && e.key !== "Tab") incrementKeystrokes();
+    if (e.key === "Backspace") incrementErrors();
     typing.handleKeyDown(e);
   };
 
@@ -178,11 +195,13 @@ function PracticePageContent() {
   }
   const totalChars = targetText.length || 1;
   const completedChars = allTypedText.length + typing.currentLineTyped.length;
-  const granularProgress = Math.min(100, Math.round((completedChars / totalChars) * 100));
+  const granularProgress = Math.min(
+    100,
+    Math.round((completedChars / totalChars) * 100),
+  );
 
   return (
     <div className="h-screen flex flex-col bg-slate-950 overflow-hidden relative selection:bg-cyan-500/30 selection:text-cyan-200">
-      
       {/* Background Ambience */}
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_0%,_#1e293b_0%,_#020617_80%)]" />
 
@@ -194,8 +213,12 @@ function PracticePageContent() {
               href="/lessons"
               className="group flex items-center gap-2 text-slate-400 hover:text-cyan-400 transition-colors"
             >
-              <span className="font-mono text-lg opacity-50 group-hover:opacity-100">←</span>
-              <span className="font-bold tracking-tight text-sm">EXIT_LESSON</span>
+              <span className="font-mono text-lg opacity-50 group-hover:opacity-100">
+                ←
+              </span>
+              <span className="font-bold tracking-tight text-sm">
+                EXIT_LESSON
+              </span>
             </Link>
             <div className="h-4 w-px bg-white/10" />
             <h1 className="text-sm font-mono text-slate-500 hidden sm:block">
@@ -224,14 +247,19 @@ function PracticePageContent() {
         {!lessonProgress.showLessonIntro && (
           <>
             <div className="flex-shrink-0 mb-12 mt-8 flex justify-between items-end px-2">
-              <GuidanceMessage message={isMobile ? undefined : typing.guidanceMessage} />
+              <GuidanceMessage
+                message={isMobile ? undefined : typing.guidanceMessage}
+              />
               <div className="font-mono text-xs text-slate-600 tracking-widest">
-                 LINE {lessonProgress.currentLineIndex + 1}/{textLines.length}
+                LINE {lessonProgress.currentLineIndex + 1}/{textLines.length}
               </div>
             </div>
 
             {/* Visual Typing Area */}
-            <div className="flex-shrink-0 mb-8 cursor-text" onClick={() => inputRef.current?.focus()}>
+            <div
+              className="flex-shrink-0 mb-8 cursor-text"
+              onClick={() => inputRef.current?.focus()}
+            >
               <CharacterDisplay
                 targetText={currentLine}
                 typedText={typing.currentLineTyped}
@@ -269,16 +297,16 @@ function PracticePageContent() {
                 </div>
               </div>
             )}
-            
+
             {isMobile && <div className="pb-6" />}
           </>
         )}
       </div>
 
       {/* WARNING POP-UP COMPONENT */}
-      <KeyboardWarning 
-        isVisible={showWarning} 
-        onClose={() => setShowWarning(false)} 
+      <KeyboardWarning
+        isVisible={showWarning}
+        onClose={() => setShowWarning(false)}
       />
 
       <CompletionModal

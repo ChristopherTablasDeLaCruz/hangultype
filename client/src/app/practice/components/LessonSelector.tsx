@@ -73,8 +73,8 @@ export function LessonSelector({
                 isCurrent
                   ? "border-blue-500 bg-blue-50 text-blue-900"
                   : isCompleted
-                  ? "border-green-500 bg-green-50 text-green-900 hover:bg-green-100"
-                  : "border-gray-300 bg-white text-gray-900 hover:bg-gray-50"
+                    ? "border-green-500 bg-green-50 text-green-900 hover:bg-green-100"
+                    : "border-gray-300 bg-white text-gray-900 hover:bg-gray-50"
               }`}
             >
               <div className="flex items-center justify-between mb-2">
@@ -84,7 +84,7 @@ export function LessonSelector({
                 <div className="flex items-center gap-2">
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(
-                      lesson.difficulty
+                      lesson.difficulty,
                     )}`}
                   >
                     {getDifficultyLabel(lesson.difficulty)}

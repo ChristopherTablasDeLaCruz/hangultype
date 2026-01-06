@@ -8,7 +8,7 @@ export function useLessonProgress() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const supabase = createClient();
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   // Data State
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -17,9 +17,11 @@ export function useLessonProgress() {
 
   // Core lesson state
   const lessonParam = searchParams.get("lesson");
-  const [currentLessonId, setCurrentLessonId] = useState(lessonParam || "1.1.1");
+  const [currentLessonId, setCurrentLessonId] = useState(
+    lessonParam || "1.1.1",
+  );
   const [showLessonIntro, setShowLessonIntro] = useState(true);
-  
+
   // 1. Cloud-based completion state (Initialized empty)
   const [completedLessons, setCompletedLessons] = useState<string[]>([]);
 
@@ -51,8 +53,10 @@ export function useLessonProgress() {
   // Effect 2: Fetch User Progress (The Cloud Sync)
   useEffect(() => {
     async function syncProgress() {
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (user) {
         console.log("Syncing progress for user:", user.id);
         try {
@@ -82,7 +86,6 @@ export function useLessonProgress() {
   const currentLesson = useMemo(() => {
     return lessons.find((l) => l.id === currentLessonId) || lessons[0];
   }, [lessons, currentLessonId]);
-
 
   const markLessonComplete = (lessonId: string) => {
     if (!completedLessons.includes(lessonId)) {

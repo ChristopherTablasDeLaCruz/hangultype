@@ -1,5 +1,5 @@
 // src/components/practice/CharacterDisplay.tsx
-// Character-by-character display 
+// Character-by-character display
 import {
   complexVowelSequences,
   doubleConsonantMappings,
@@ -19,10 +19,15 @@ export function CharacterDisplay({
   isCompact = false,
 }: CharacterDisplayProps) {
   const textSize = isCompact ? "text-xl" : "text-3xl";
-  const spacing = isCompact ? "tracking-wide leading-relaxed" : "tracking-widest leading-loose";
-  
+  const spacing = isCompact
+    ? "tracking-wide leading-relaxed"
+    : "tracking-widest leading-loose";
+
   // Logic: Check if user typed first part of complex char (Yellow state)
-  function checkPartialProgress(typedChar: string, targetChar: string): boolean {
+  function checkPartialProgress(
+    typedChar: string,
+    targetChar: string,
+  ): boolean {
     if (complexVowelSequences[targetChar]) {
       const [first] = complexVowelSequences[targetChar];
       return typedChar === first;
@@ -79,7 +84,7 @@ export function CharacterDisplay({
 
       if (checkPartialProgress(typedChar, targetChar)) {
         if (isWrongFollowUp(target, trimmed, i)) continue;
-        return i; 
+        return i;
       }
       continue;
     }
@@ -107,7 +112,7 @@ export function CharacterDisplay({
           if (isWrongFollowUp(targetText, typedText, i)) {
             // Error State
             textColor = "text-red-400";
-            textGlow = "drop-shadow-[0_0_8px_rgba(248,113,113,0.4)]"; 
+            textGlow = "drop-shadow-[0_0_8px_rgba(248,113,113,0.4)]";
           } else if (typedChar === char) {
             // Success State
             textColor = "text-emerald-400";
@@ -121,8 +126,8 @@ export function CharacterDisplay({
             textColor = "text-red-400";
           }
         } else if (isCursor) {
-           // Highlight current character slightly brighter than ghost text
-           textColor = "text-slate-500";
+          // Highlight current character slightly brighter than ghost text
+          textColor = "text-slate-500";
         }
 
         return (
@@ -134,7 +139,7 @@ export function CharacterDisplay({
             {isCursor && (
               <span className="absolute -left-1 -top-1 bottom-0 w-[3px] bg-cyan-400 rounded-full shadow-[0_0_12px_rgba(34,211,238,0.8)] animate-[caret-blink_1.5s_ease-in-out_infinite]" />
             )}
-            
+
             {char === " " ? "\u00A0" : char}
           </span>
         );

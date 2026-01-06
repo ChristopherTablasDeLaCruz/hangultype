@@ -8,7 +8,8 @@ export function GuidanceMessage({ message }: GuidanceMessageProps) {
     <div className="h-8 flex items-center">
       {/* Fixed height prevents the typing area from "jumping" when hints appear */}
       {message ? (
-        <div className="
+        <div
+          className="
           animate-in fade-in zoom-in-95 duration-300
           flex items-center gap-2 
           px-3 py-1 
@@ -18,7 +19,8 @@ export function GuidanceMessage({ message }: GuidanceMessageProps) {
           border border-cyan-500/20 
           text-xs font-mono font-bold tracking-tight text-cyan-400
           shadow-[0_0_15px_rgba(34,211,238,0.1)]
-        ">
+        "
+        >
           <span className="opacity-70">SYSTEM:</span>
           <span>{message.toUpperCase()}</span>
         </div>

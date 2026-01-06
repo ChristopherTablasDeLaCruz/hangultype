@@ -3,7 +3,7 @@
 // Break down text into bite-sized chunks
 export function splitTextIntoLines(
   text: string,
-  maxLength: number = 80
+  maxLength: number = 80,
 ): string[] {
   // Korean characters and foundation lessons need special handling
   // No point splitting "ㄱ ㄴ ㄷ ㄹ" into tiny pieces

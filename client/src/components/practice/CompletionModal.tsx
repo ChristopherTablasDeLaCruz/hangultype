@@ -20,7 +20,7 @@ export function CompletionModal({
 
   return (
     <div className="fixed top-24 left-0 right-0 z-50 flex justify-center px-4 animate-in fade-in slide-in-from-top-4 duration-500">
-      <div 
+      <div
         className="
           relative overflow-hidden
           w-full max-w-3xl
@@ -35,7 +35,6 @@ export function CompletionModal({
         <div className="absolute -left-10 -top-10 w-32 h-32 bg-emerald-500/10 blur-[50px] rounded-full pointer-events-none" />
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-6 px-6 py-4 relative z-10">
-          
           {/* Text Content */}
           <div className="flex-1 text-center sm:text-left">
             <div className="flex items-center justify-center sm:justify-start gap-3 mb-1">
@@ -44,7 +43,7 @@ export function CompletionModal({
                 LESSON COMPLETE
               </h2>
             </div>
-            
+
             <div className="text-sm font-mono text-emerald-400">
               <span className="opacity-70 text-slate-400">RESULT: </span>
               <span className="font-bold">{wpm} WPM</span>
@@ -74,7 +73,9 @@ export function CompletionModal({
                          transition-all font-mono text-xs font-bold shadow-[0_0_15px_rgba(16,185,129,0.1)]"
               >
                 NEXT_MODULE
-                <span className="group-hover:translate-x-1 transition-transform">→</span>
+                <span className="group-hover:translate-x-1 transition-transform">
+                  →
+                </span>
               </button>
             )}
           </div>

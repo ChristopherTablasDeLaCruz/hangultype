@@ -14,7 +14,7 @@ import {
 
 export function useKoreanTyping(
   currentLine: string,
-  currentLineJamo: string[]
+  currentLineJamo: string[],
 ) {
   // Typing state
   const [currentLineTyped, setCurrentLineTyped] = useState("");
@@ -22,7 +22,7 @@ export function useKoreanTyping(
 
   // Complex character handling
   const [lockedMedialIndices, setLockedMedialIndices] = useState<Set<number>>(
-    new Set()
+    new Set(),
   );
 
   // Keyboard feedback
@@ -72,7 +72,7 @@ export function useKoreanTyping(
       currentLineTyped,
       shiftPressed,
       lockedMedialIndices,
-      lockIndex
+      lockIndex,
     );
   }, [
     currentLineJamo,
@@ -107,7 +107,7 @@ export function useKoreanTyping(
         const typedJamo = textToJamoSequence(currentLineTyped);
         const expectedGuidance = getGuidanceForCharacter(
           expected,
-          getSequenceProgress(expected, typedJamo)
+          getSequenceProgress(expected, typedJamo),
         );
 
         // Flash feedback if they're on the right track

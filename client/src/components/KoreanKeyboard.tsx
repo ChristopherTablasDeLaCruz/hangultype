@@ -18,13 +18,42 @@ const keyboardRows: string[][] = [
 ];
 
 const koreanToQwertyMap: Record<string, string> = {
-  ㅂ: "Q", ㅈ: "W", ㄷ: "E", ㄱ: "R", ㅅ: "T", ㅛ: "Y", ㅕ: "U", ㅑ: "I", ㅐ: "O", ㅔ: "P",
-  ㅁ: "A", ㄴ: "S", ㅇ: "D", ㄹ: "F", ㅎ: "G", ㅗ: "H", ㅓ: "J", ㅏ: "K", ㅣ: "L",
-  ㅋ: "Z", ㅌ: "X", ㅊ: "C", ㅍ: "V", ㅠ: "B", ㅜ: "N", ㅡ: "M",
+  ㅂ: "Q",
+  ㅈ: "W",
+  ㄷ: "E",
+  ㄱ: "R",
+  ㅅ: "T",
+  ㅛ: "Y",
+  ㅕ: "U",
+  ㅑ: "I",
+  ㅐ: "O",
+  ㅔ: "P",
+  ㅁ: "A",
+  ㄴ: "S",
+  ㅇ: "D",
+  ㄹ: "F",
+  ㅎ: "G",
+  ㅗ: "H",
+  ㅓ: "J",
+  ㅏ: "K",
+  ㅣ: "L",
+  ㅋ: "Z",
+  ㅌ: "X",
+  ㅊ: "C",
+  ㅍ: "V",
+  ㅠ: "B",
+  ㅜ: "N",
+  ㅡ: "M",
 };
 
 const shiftVariants: Record<string, string> = {
-  ㅂ: "ㅃ", ㅈ: "ㅉ", ㄷ: "ㄸ", ㄱ: "ㄲ", ㅅ: "ㅆ", ㅐ: "ㅒ", ㅔ: "ㅖ",
+  ㅂ: "ㅃ",
+  ㅈ: "ㅉ",
+  ㄷ: "ㄸ",
+  ㄱ: "ㄲ",
+  ㅅ: "ㅆ",
+  ㅐ: "ㅒ",
+  ㅔ: "ㅖ",
 };
 
 export default function KoreanKeyboard({
@@ -53,7 +82,11 @@ export default function KoreanKeyboard({
             isActive={isKeyActive(koreanChar)}
             isGuided={isKeyGuided(koreanChar)}
             isFocused={isKeyFocused(koreanChar)}
-            displayChar={shiftActive && shiftVariants[koreanChar] ? shiftVariants[koreanChar] : koreanChar}
+            displayChar={
+              shiftActive && shiftVariants[koreanChar]
+                ? shiftVariants[koreanChar]
+                : koreanChar
+            }
             isCompact={isCompact}
           />
         ))}
@@ -74,7 +107,11 @@ export default function KoreanKeyboard({
             isActive={isKeyActive(koreanChar)}
             isGuided={isKeyGuided(koreanChar)}
             isFocused={isKeyFocused(koreanChar)}
-            displayChar={shiftActive && shiftVariants[koreanChar] ? shiftVariants[koreanChar] : koreanChar}
+            displayChar={
+              shiftActive && shiftVariants[koreanChar]
+                ? shiftVariants[koreanChar]
+                : koreanChar
+            }
             isCompact={isCompact}
           />
         ))}
@@ -96,7 +133,11 @@ export default function KoreanKeyboard({
             isActive={isKeyActive(koreanChar)}
             isGuided={isKeyGuided(koreanChar)}
             isFocused={isKeyFocused(koreanChar)}
-            displayChar={shiftActive && shiftVariants[koreanChar] ? shiftVariants[koreanChar] : koreanChar}
+            displayChar={
+              shiftActive && shiftVariants[koreanChar]
+                ? shiftVariants[koreanChar]
+                : koreanChar
+            }
             isCompact={isCompact}
           />
         ))}
@@ -141,18 +182,20 @@ function KeyButton({
   const keySize = isCompact
     ? "w-8 h-9"
     : "w-8 h-10 sm:w-10 sm:h-12 md:w-12 md:h-14";
-  
+
   const textSize = isCompact ? "text-sm" : "text-base sm:text-lg";
 
   // UI State Logic
   let styleClass = "bg-slate-800 border-slate-700 text-slate-400"; // Default
-  
+
   if (isActive) {
     // Pressed State (Cyan Glow)
-    styleClass = "bg-cyan-500 border-cyan-400 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.6)] scale-95";
+    styleClass =
+      "bg-cyan-500 border-cyan-400 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.6)] scale-95";
   } else if (isGuided) {
     // Guide State (Emerald Ring)
-    styleClass = "bg-slate-800 border-emerald-400 text-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.2)]";
+    styleClass =
+      "bg-slate-800 border-emerald-400 text-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.2)]";
   } else if (isFocused) {
     // Focused State (Subtle Slate Highlight)
     styleClass = "bg-slate-700 border-slate-600 text-slate-200";
@@ -169,9 +212,11 @@ function KeyButton({
       <span className={`${textSize} font-mono font-bold leading-none mb-0.5`}>
         {displayChar}
       </span>
-      
+
       {!isCompact && (
-        <span className={`text-[9px] font-mono leading-none opacity-50 ${isActive ? 'text-slate-900' : ''}`}>
+        <span
+          className={`text-[9px] font-mono leading-none opacity-50 ${isActive ? "text-slate-900" : ""}`}
+        >
           {qwertyChar}
         </span>
       )}
@@ -190,17 +235,21 @@ function SpacebarKey({
   isCompact: boolean;
 }) {
   const width = isCompact ? "w-40 h-8" : "w-64 h-10 sm:h-12";
-  
+
   let styleClass = "bg-slate-800 border-slate-700";
-  
+
   if (isActive) {
-    styleClass = "bg-cyan-500 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.6)] scale-95";
+    styleClass =
+      "bg-cyan-500 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.6)] scale-95";
   } else if (isGuided) {
-    styleClass = "bg-slate-800 border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.2)]";
+    styleClass =
+      "bg-slate-800 border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.2)]";
   }
 
   return (
-    <div className={`${width} border-b-4 rounded-lg transition-all duration-75 ${styleClass}`} />
+    <div
+      className={`${width} border-b-4 rounded-lg transition-all duration-75 ${styleClass}`}
+    />
   );
 }
 
@@ -215,10 +264,12 @@ function ModifierKey({
   isGuided: boolean;
   isCompact?: boolean;
 }) {
-  const size = isCompact ? "w-14 h-9" : "w-16 h-10 sm:w-20 sm:h-12 md:w-24 md:h-14";
-  
+  const size = isCompact
+    ? "w-14 h-9"
+    : "w-16 h-10 sm:w-20 sm:h-12 md:w-24 md:h-14";
+
   let styleClass = "bg-slate-900 border-slate-800 text-slate-500";
-  
+
   if (isActive) {
     styleClass = "bg-cyan-600 border-cyan-500 text-white shadow-lg scale-95";
   } else if (isGuided) {
@@ -247,10 +298,12 @@ function BackspaceKey({
   isGuided: boolean;
   isCompact: boolean;
 }) {
-  const size = isCompact ? "w-14 h-9" : "w-16 h-10 sm:w-20 sm:h-12 md:w-24 md:h-14";
-  
+  const size = isCompact
+    ? "w-14 h-9"
+    : "w-16 h-10 sm:w-20 sm:h-12 md:w-24 md:h-14";
+
   let styleClass = "bg-slate-900 border-slate-800 text-slate-500";
-  
+
   if (isActive) {
     styleClass = "bg-cyan-600 border-cyan-500 text-white scale-95";
   } else if (isGuided) {

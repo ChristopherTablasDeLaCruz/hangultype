@@ -13,7 +13,7 @@ const values = ALL_LESSONS.map((l, index) => {
     targetText: l.targetText,
     instructions: l.instructions,
     focusKeys: l.focusKeys,
-    reviewKeys: l.reviewKeys || []
+    reviewKeys: l.reviewKeys || [],
   }).replace(/'/g, "''"); // Escape single quotes for SQL
 
   // Escape single quotes in text fields

@@ -9,7 +9,7 @@ import { textToJamoSequence } from "./decomposition";
 // Show what to type next for each character type
 export function getGuidanceForCharacter(
   targetChar: string,
-  progressInSequence: number = 0
+  progressInSequence: number = 0,
 ): string[] {
   // Complex vowels need multiple keystrokes
   if (complexVowelSequences[targetChar]) {
@@ -43,7 +43,7 @@ export function getGuidanceForCharacter(
 // Track how far through a complex sequence the user is
 export function getSequenceProgress(
   targetChar: string,
-  typedJamo: string[]
+  typedJamo: string[],
 ): number {
   // Complex vowels - check each part of the sequence
   if (complexVowelSequences[targetChar]) {
@@ -82,7 +82,7 @@ export function getSmartGuidance(
   currentTyped: string,
   shiftPressed: boolean,
   lockedMedialIndices: Set<number>,
-  lockIndex: (i: number) => void
+  lockIndex: (i: number) => void,
 ): { keys: string[]; message?: string } {
   if (jamoIndex >= targetJamo.length) return { keys: [] };
 

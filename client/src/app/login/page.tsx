@@ -1,67 +1,100 @@
-'use client'
+"use client";
 
-import { createClient } from '@/utils/supabase/client'
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { createClient } from "@/utils/supabase/client";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [welcomeText, setWelcomeText] = useState('')
-  
-  const router = useRouter()
-  const supabase = createClient()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [welcomeText, setWelcomeText] = useState("");
+
+  const router = useRouter();
+  const supabase = createClient();
 
   // Character pool for the background
-  const hangulChars = ['한', '글', '형', 'ㄱ', 'ㄴ', 'ㄷ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ', 'ㅏ', 'ㅑ', 'ㅓ', 'ㅕ', 'ㅗ', 'ㅛ', 'ㅜ', 'ㅠ', 'ㅡ', 'ㅣ'];
+  const hangulChars = [
+    "한",
+    "글",
+    "형",
+    "ㄱ",
+    "ㄴ",
+    "ㄷ",
+    "ㄹ",
+    "ㅁ",
+    "ㅂ",
+    "ㅅ",
+    "ㅇ",
+    "ㅈ",
+    "ㅊ",
+    "ㅋ",
+    "ㅌ",
+    "ㅍ",
+    "ㅎ",
+    "ㅏ",
+    "ㅑ",
+    "ㅓ",
+    "ㅕ",
+    "ㅗ",
+    "ㅛ",
+    "ㅜ",
+    "ㅠ",
+    "ㅡ",
+    "ㅣ",
+  ];
 
-  const fullMessage = "SYSTEM_READY: ENCODING_HANGUL_CURRICULUM..."
+  const fullMessage = "SYSTEM_READY: ENCODING_HANGUL_CURRICULUM...";
 
   useEffect(() => {
-    let i = 0
+    let i = 0;
     const interval = setInterval(() => {
-      setWelcomeText(fullMessage.slice(0, i))
-      i++
-      if (i > fullMessage.length) clearInterval(interval)
-    }, 40)
-    return () => clearInterval(interval)
-  }, [])
+      setWelcomeText(fullMessage.slice(0, i));
+      i++;
+      if (i > fullMessage.length) clearInterval(interval);
+    }, 40);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSignIn = async () => {
-    setLoading(true)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) alert(error.message)
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) alert(error.message);
     else {
-      router.push('/lessons')
-      router.refresh()
+      router.push("/lessons");
+      router.refresh();
     }
-    setLoading(false)
-  }
+    setLoading(false);
+  };
 
   const handleSignUp = async () => {
-    setLoading(true)
+    setLoading(true);
 
-    const redirectTo = `${window.location.origin}/auth/callback`
+    const redirectTo = `${window.location.origin}/auth/callback`;
 
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { 
+      options: {
         emailRedirectTo: redirectTo,
-        data: { 
-          username: email.split('@')[0] 
+        data: {
+          username: email.split("@")[0],
         },
       },
-    })
-    if (error) alert(error.message)
-    else alert('Check your email for confirmation!')
-    setLoading(false)
-  }
+    });
+    if (error) {
+      alert(error.message);
+    } else {
+      alert("Check your email for confirmation!");
+    }
+    setLoading(false);
+  };
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-slate-950 overflow-hidden selection:bg-cyan-500/30">
-      
       {/* HANGUL RAIN */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-40 z-0">
         {/* Generate multiple floating characters */}
@@ -69,8 +102,8 @@ export default function LoginPage() {
           <div
             key={index}
             className={`absolute font-bold pointer-events-none 
-              ${index % 2 === 0 ? 'animate-float-slow' : 'animate-float-fast'}
-              ${index % 3 === 0 ? 'text-cyan-500/20' : 'text-emerald-500/20'}`}
+              ${index % 2 === 0 ? "animate-float-slow" : "animate-float-fast"}
+              ${index % 3 === 0 ? "text-cyan-500/20" : "text-emerald-500/20"}`}
             style={{
               left: `${(index * 7) % 100}%`, // Spread across the width
               top: `${(index * 13) % 100}%`, // Randomish starting heights
@@ -81,7 +114,6 @@ export default function LoginPage() {
             {char}
           </div>
         ))}
-        
       </div>
 
       {/* 2. Ambient Glows */}
@@ -92,22 +124,26 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-md p-8 sm:p-10 bg-slate-900/70 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-500">
         <div className="text-center mb-10">
           <div className="inline-block mb-3 px-3 py-1 rounded-full border border-slate-700 bg-slate-950/50">
-             <span className="text-[10px] font-mono text-slate-400 tracking-widest uppercase">
-               ● {loading ? "AUTHENTICATING..." : "SYSTEM_READY"}
-             </span>
+            <span className="text-[10px] font-mono text-slate-400 tracking-widest uppercase">
+              ● {loading ? "AUTHENTICATING..." : "SYSTEM_READY"}
+            </span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tighter text-white mb-2">
             HANGUL<span className="text-cyan-400">_TYPE</span>
           </h1>
           <div className="h-4 flex items-center justify-center">
-            <p className="text-slate-400 font-mono text-[10px] tracking-wider">{welcomeText}</p>
+            <p className="text-slate-400 font-mono text-[10px] tracking-wider">
+              {welcomeText}
+            </p>
             <span className="inline-block w-1.5 h-3 ml-1 bg-cyan-500 animate-pulse" />
           </div>
         </div>
-        
+
         <div className="space-y-6">
           <div className="space-y-2">
-            <label className="text-xs font-mono font-bold text-cyan-400 ml-1 uppercase">usr_email</label>
+            <label className="text-xs font-mono font-bold text-cyan-400 ml-1 uppercase">
+              usr_email
+            </label>
             <input
               type="email"
               placeholder="IDENTIFIER@DOMAIN.COM"
@@ -117,7 +153,9 @@ export default function LoginPage() {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-xs font-mono font-bold text-cyan-400 ml-1 uppercase">pass_key</label>
+            <label className="text-xs font-mono font-bold text-cyan-400 ml-1 uppercase">
+              pass_key
+            </label>
             <input
               type="password"
               placeholder="••••••••"
@@ -127,7 +165,7 @@ export default function LoginPage() {
             />
           </div>
         </div>
-        
+
         <div className="flex flex-col gap-3 mt-8">
           <button
             onClick={handleSignIn}
@@ -137,8 +175,14 @@ export default function LoginPage() {
             {loading ? "INITIALIZING..." : "ACCESS_SYSTEM"}
           </button>
           <div className="relative py-2">
-             <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-800"></div></div>
-             <div className="relative flex justify-center text-xs"><span className="bg-slate-900/60 px-2 text-slate-600 font-mono">OR</span></div>
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-800"></div>
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-slate-900/60 px-2 text-slate-600 font-mono">
+                OR
+              </span>
+            </div>
           </div>
           <button
             onClick={handleSignUp}
@@ -154,5 +198,5 @@ export default function LoginPage() {
         HANGUL_TYPE_OS v2.0.5 • SECURE_ENCRYPTION_ACTIVE
       </div>
     </div>
-  )
+  );
 }
