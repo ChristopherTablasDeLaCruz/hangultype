@@ -91,17 +91,20 @@ export function getSequenceProgress(
 
 // ㅆ and ㄲ have different input methods: Initial = Shift+base, Final = base+base
 function isFinalConsonantPosition(targetJamo: string[], index: number): boolean {
-  if (index < 2) return false;
-
   const CONSONANTS = ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];
   const VOWELS = ["ㅏ", "ㅐ", "ㅑ", "ㅒ", "ㅓ", "ㅔ", "ㅕ", "ㅖ", "ㅗ", "ㅘ", "ㅙ", "ㅚ", "ㅛ", "ㅜ", "ㅝ", "ㅞ", "ㅟ", "ㅠ", "ㅡ", "ㅢ", "ㅣ"];
 
   const current = targetJamo[index];
   if (!CONSONANTS.includes(current)) return false;
 
-  const prev1 = targetJamo[index - 1];
-  const prev2 = index >= 2 ? targetJamo[index - 2] : undefined;
+  const next = targetJamo[index + 1];
 
+  if (next && VOWELS.includes(next)) {
+    return false;
+  }
+
+  if (index < 2) return false;
+  const prev1 = targetJamo[index - 1];
   if (VOWELS.includes(prev1)) {
     return true;
   }
