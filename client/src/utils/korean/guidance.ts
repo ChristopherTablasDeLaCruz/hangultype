@@ -124,13 +124,23 @@ export function getSmartGuidance(
   const typedJamo = textToJamoSequence(currentTyped);
   const currentPos = jamoIndex;
 
-  const targetSoFar = targetJamo.slice(0, currentPos).join("");
-  const typedSoFar = typedJamo.slice(0, currentPos).join("");
-  if (typedSoFar !== targetSoFar) {
-    return {
-      keys: ["backspace"],
-      message: "Backspace to fix the earlier mistake(s)",
-    };
+  for (let i = 0; i < currentPos; i++) {
+    const targetChar = targetJamo[i];
+    const typedChar = typedJamo[i];
+
+    if (typedChar === undefined) continue;
+    if (typedChar !== targetChar) {
+      const isPartialMatch =
+        (complexVowelSequences[targetChar] && complexVowelSequences[targetChar][0] === typedChar) ||
+        (compoundFinalSequences[targetChar] && compoundFinalSequences[targetChar][0] === typedChar);
+
+      if (!isPartialMatch) {
+        return {
+          keys: ["backspace"],
+          message: "Backspace to fix the earlier mistake(s)",
+        };
+      }
+    }
   }
 
   const typedAtPos = typedJamo[currentPos];
@@ -344,7 +354,12 @@ export function getSmartGuidance(
     };
   }
 
-  if (typedAtPos === undefined) return { keys: [targetChar] };
+  if (typedAtPos === undefined) {
+    return {
+      keys: [targetChar],
+      message: targetChar === " " ? "Press Space" : `Type ${targetChar}`,
+    };
+  }
   if (typedAtPos === targetChar) return { keys: [] };
   return {
     keys: ["backspace"],

@@ -4,6 +4,7 @@ import {
   doubleConsonantMappings,
   shiftVowelMappings,
 } from "@/utils/korean/mappings";
+import { textToJamoSequence } from "@/utils/korean/decomposition";
 
 interface CharacterDisplayProps {
   targetText: string;
@@ -42,6 +43,17 @@ export function CharacterDisplay({
     if (shiftVowelMappings[targetChar]) {
       return shiftVowelMappings[targetChar].base === typedChar;
     }
+
+    const targetJamo = textToJamoSequence(targetChar);
+    const typedJamo = textToJamoSequence(typedChar);
+
+    if (targetJamo.length > 1 && typedJamo.length > 0 && typedJamo.length < targetJamo.length) {
+      for (let i = 0; i < typedJamo.length; i++) {
+        if (typedJamo[i] !== targetJamo[i]) return false;
+      }
+      return true;
+    }
+
     return false;
   }
 
@@ -80,6 +92,24 @@ export function CharacterDisplay({
         if (next !== undefined && next !== targetChar) return true;
       }
     }
+
+    const currentJamo = textToJamoSequence(current);
+    const targetJamo = textToJamoSequence(targetChar);
+
+    if (currentJamo.length > 0 && currentJamo.length < targetJamo.length) {
+      let isValidPartial = true;
+      for (let j = 0; j < currentJamo.length; j++) {
+        if (currentJamo[j] !== targetJamo[j]) {
+          isValidPartial = false;
+          break;
+        }
+      }
+
+      if (isValidPartial && next !== undefined && next !== targetChar) {
+        return true;
+      }
+    }
+
     return false;
   }
 
