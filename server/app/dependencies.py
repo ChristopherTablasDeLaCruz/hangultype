@@ -10,5 +10,4 @@ key: str = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
 
 def get_supabase() -> Client:
-    """Dependency to provide the Supabase client to endpoints."""
     return supabase

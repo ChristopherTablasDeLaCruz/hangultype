@@ -1,5 +1,19 @@
-// src/types/lesson.ts
-// Lesson and progress tracking types
+export interface DBLesson {
+  id: string;
+  title: string;
+  description: string;
+  phase: string;
+  unit: number;
+  lesson_number: number;
+  difficulty: number;
+  order_index: number;
+  content_json: {
+    targetText: string;
+    instructions: string;
+    focusKeys: string[];
+    reviewKeys?: string[];
+  };
+}
 
 export interface Lesson {
   id: string;
@@ -9,15 +23,12 @@ export interface Lesson {
   unit: number;
   lessonNumber: number;
 
-  // What the user will practice
   targetText: string;
   instructions: string;
 
-  // Keys featured in this lesson
-  focusKeys: string[]; // New keys being learned
-  reviewKeys?: string[]; // Previously learned keys to reinforce
+  focusKeys: string[];
+  reviewKeys?: string[];
 
-  // How challenging this lesson is
   difficulty: 1 | 2 | 3 | 4 | 5;
 }
 
@@ -25,7 +36,7 @@ export interface LessonAttempt {
   timestamp: Date;
   wpm: number;
   accuracy: number;
-  completionTime: number; // How long it took in seconds
+  completionTime: number;
 }
 
 export interface LessonProgress {

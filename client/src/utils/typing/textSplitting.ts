@@ -1,35 +1,36 @@
-// src/utils/typing/textSplitting.ts
-
-// Break down text into bite-sized chunks
 export function splitTextIntoLines(
   text: string,
-  maxLength: number = 80,
+  maxLength: number = 40,
 ): string[] {
-  // Korean characters and foundation lessons need special handling
-  // No point splitting "ㄱ ㄴ ㄷ ㄹ" into tiny pieces
-  if (!text.includes(" ")) {
+  if (text.includes(" ")) {
     const chars = text.split(" ");
-    const lines: string[] = [];
-    let currentLine = "";
+    const isShortTokenDrill = chars.every(char => char.length <= 3);
 
-    for (const char of chars) {
-      // Don't cram too many characters on one line - hurts readability
-      if (
-        currentLine.length + char.length + 1 > maxLength &&
-        currentLine.length > 0
-      ) {
-        lines.push(currentLine.trim());
-        currentLine = char;
-      } else {
-        currentLine += (currentLine ? " " : "") + char;
+    if (isShortTokenDrill) {
+      const lines: string[] = [];
+      let currentLine = "";
+
+      for (const char of chars) {
+        if (
+          currentLine.length + char.length + 1 > maxLength &&
+          currentLine.length > 0
+        ) {
+          lines.push(currentLine.trim());
+          currentLine = char;
+        } else {
+          currentLine += (currentLine ? " " : "") + char;
+        }
       }
-    }
 
-    if (currentLine.trim()) lines.push(currentLine.trim());
-    return lines.filter((line) => line.length > 0);
+      if (currentLine.trim()) lines.push(currentLine.trim());
+      return lines.filter((line) => line.length > 0);
+    }
   }
 
-  // Real sentences should break naturally, not mid-thought
+  if (!text.includes(" ")) {
+    return [text];
+  }
+
   const sentences = text.split(/([.!?]\s*)/);
   const lines: string[] = [];
   let currentLine = "";
@@ -39,7 +40,6 @@ export function splitTextIntoLines(
     const punctuation = sentences[i + 1] || "";
     const fullSentence = sentence + punctuation;
 
-    // Keep complete thoughts together when possible
     if (
       currentLine.length + fullSentence.length > maxLength &&
       currentLine.length > 0
@@ -55,13 +55,11 @@ export function splitTextIntoLines(
     lines.push(currentLine.trim());
   }
 
-  // Sometimes sentences are just too damn long - time for plan B
   const finalLines: string[] = [];
   for (const line of lines) {
     if (line.length <= maxLength) {
       finalLines.push(line);
     } else {
-      // Break at word boundaries to keep things readable
       const words = line.split(" ");
       let chunk = "";
 
@@ -78,6 +76,5 @@ export function splitTextIntoLines(
     }
   }
 
-  // Clean up any empty lines that snuck through
   return finalLines.filter((line) => line.length > 0);
 }

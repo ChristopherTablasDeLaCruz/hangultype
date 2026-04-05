@@ -1,4 +1,3 @@
-// src/components/practice/CompletionModal.tsx
 interface CompletionModalProps {
   isVisible: boolean;
   wpm: number;
@@ -6,6 +5,7 @@ interface CompletionModalProps {
   onTryAgain: () => void;
   onNextLesson: () => void;
   hasNextLesson: boolean;
+  isGuest?: boolean;
 }
 
 export function CompletionModal({
@@ -15,6 +15,7 @@ export function CompletionModal({
   onTryAgain,
   onNextLesson,
   hasNextLesson,
+  isGuest = false,
 }: CompletionModalProps) {
   if (!isVisible) return null;
 
@@ -30,12 +31,10 @@ export function CompletionModal({
           p-1
         "
       >
-        {/* Ambient Glow */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500/50 to-emerald-500/0" />
         <div className="absolute -left-10 -top-10 w-32 h-32 bg-emerald-500/10 blur-[50px] rounded-full pointer-events-none" />
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-6 px-6 py-4 relative z-10">
-          {/* Text Content */}
           <div className="flex-1 text-center sm:text-left">
             <div className="flex items-center justify-center sm:justify-start gap-3 mb-1">
               <span className="text-xl">🎉</span>
@@ -50,9 +49,14 @@ export function CompletionModal({
               <span className="mx-2 text-slate-600">|</span>
               <span className="font-bold">{accuracy}% ACCURACY</span>
             </div>
+
+            {isGuest && (
+              <div className="mt-2 text-xs font-mono text-yellow-400/80">
+                ⚠️ Guest mode: Progress not saved
+              </div>
+            )}
           </div>
 
-          {/* Action Buttons */}
           <div className="flex gap-3">
             <button
               onClick={onTryAgain}

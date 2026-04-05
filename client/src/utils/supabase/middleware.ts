@@ -1,4 +1,3 @@
-// src/utils/supabase/middleware.ts
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -30,7 +29,6 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // Refreshing the auth token
   await supabase.auth.getUser();
 
   return supabaseResponse;

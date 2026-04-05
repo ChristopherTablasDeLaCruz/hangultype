@@ -9,23 +9,25 @@ import { LessonIntro } from "@/components/practice/LessonIntro";
 import { CompletionModal } from "@/components/practice/CompletionModal";
 import { PerformanceStats } from "@/components/practice/PerformanceStats";
 import { GuidanceMessage } from "@/components/practice/GuidanceMessage";
-import { KeyboardWarning } from "@/components/practice/KeyboardWarning"; // IMPORT ADDED
+import { KeyboardWarning } from "@/components/practice/KeyboardWarning";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { splitTextIntoLines } from "@/utils/typing/textSplitting";
 import { useKoreanTyping } from "@/hooks/useKoreanTyping";
 import { usePerformanceTracking } from "@/hooks/usePerformanceTracking";
 import { useLessonProgress } from "@/hooks/useLessonProgress";
+import { useAuth } from "@/context/AuthContext";
 
 function PracticePageContent() {
   const inputRef = useRef<HTMLInputElement>(null);
   const hasSubmittedAttempt = useRef(false);
+  const { user } = useAuth();
 
-  // --- Hooks & Data ---
   const lessonProgress = useLessonProgress();
   const targetText = lessonProgress.currentLesson?.targetText || "";
 
-  const textLines = useMemo(() => splitTextIntoLines(targetText), [targetText]);
+  const textLines = useMemo(() => splitTextIntoLines(targetText, 35), [targetText]);
   const currentLine = textLines[lessonProgress.currentLineIndex] || "";
-  const isComplexLine = currentLine.length > 50;
+  const isComplexLine = currentLine.length > 30;
 
   const currentLineJamo = useMemo(
     () => textToJamoSequence(currentLine),
@@ -46,11 +48,10 @@ function PracticePageContent() {
 
   const [allTypedText, setAllTypedText] = useState("");
   const [isMobile, setIsMobile] = useState(false);
-  const [showWarning, setShowWarning] = useState(false); // STATE ADDED
+  const [showWarning, setShowWarning] = useState(false);
 
   const currentStats = getStats(allTypedText + typing.currentLineTyped);
 
-  // --- EFFECT: Keep Focus & Cursor Position ---
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
@@ -69,13 +70,12 @@ function PracticePageContent() {
     return () => window.removeEventListener("click", focusInput);
   }, []);
 
-  // --- EFFECT: Standard Logic ---
   useEffect(() => {
     typing.resetTyping();
     resetTracking();
     setAllTypedText("");
     hasSubmittedAttempt.current = false;
-    setShowWarning(false); // Reset warning on new lesson
+    setShowWarning(false);
   }, [lessonProgress.currentLessonId]);
 
   useEffect(() => {
@@ -132,7 +132,6 @@ function PracticePageContent() {
     }
   }, [typing.currentLineTyped, currentLine, lessonProgress, typing]);
 
-  // --- Handlers ---
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     startTracking();
     const newText = typing.handleInputChange(e);
@@ -145,28 +144,22 @@ function PracticePageContent() {
   };
 
   const handleKeyDownWrapper = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // --- KEYBOARD DETECTION LOGIC START ---
-    // Check if the key is a standard English letter (a-z)
-    const isEnglishLetter = /^[a-zA-Z]$/.test(e.key);
-    // Ignore if holding modifier keys (Cmd, Ctrl, Alt)
+    const isPhysicalLetterKey = /^Key[A-Z]$/.test(e.code);
+    const isIMEComposing = e.nativeEvent.isComposing || (e.nativeEvent as any).keyCode === 229;
     const isModifierPressed = e.ctrlKey || e.metaKey || e.altKey;
 
-    if (isEnglishLetter && !isModifierPressed) {
+    if (isPhysicalLetterKey && !isIMEComposing && !isModifierPressed) {
       setShowWarning(true);
-      // We allow the typing to proceed so useKoreanTyping can handle it
-      // (usually by ignoring it or treating it as error),
-      // but the warning will appear.
     } else {
-      // If they type a valid key (not English letter), hide the warning
-      if (showWarning && !isEnglishLetter) {
+      if (showWarning && (!isPhysicalLetterKey || isIMEComposing)) {
         setShowWarning(false);
       }
     }
-    // --- KEYBOARD DETECTION LOGIC END ---
 
     startTracking();
     if (e.key !== "Shift" && e.key !== "Tab") incrementKeystrokes();
     if (e.key === "Backspace") incrementErrors();
+
     typing.handleKeyDown(e);
   };
 
@@ -184,6 +177,25 @@ function PracticePageContent() {
     setTimeout(() => inputRef.current?.focus(), 100);
   };
 
+  if (lessonProgress.error) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-slate-950">
+        <div className="p-8 rounded-xl border border-red-500/30 text-red-400 bg-red-950/10 backdrop-blur-md max-w-md text-center">
+          <h2 className="text-lg font-bold mb-4 font-mono tracking-wide">
+            SYSTEM_ERROR
+          </h2>
+          <p className="text-sm mb-6 text-red-300">{lessonProgress.error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-2.5 rounded-lg bg-red-500/20 border border-red-500/30 text-red-400 font-mono text-sm font-bold uppercase tracking-wider hover:bg-red-500/30 hover:border-red-500/50 transition-all"
+          >
+            Retry_Connection
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (lessonProgress.isLoading || !lessonProgress.currentLesson) {
     return (
       <div className="h-screen flex items-center justify-center bg-slate-950">
@@ -193,6 +205,7 @@ function PracticePageContent() {
       </div>
     );
   }
+
   const totalChars = targetText.length || 1;
   const completedChars = allTypedText.length + typing.currentLineTyped.length;
   const granularProgress = Math.min(
@@ -202,10 +215,8 @@ function PracticePageContent() {
 
   return (
     <div className="h-screen flex flex-col bg-slate-950 overflow-hidden relative selection:bg-cyan-500/30 selection:text-cyan-200">
-      {/* Background Ambience */}
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_0%,_#1e293b_0%,_#020617_80%)]" />
 
-      {/* Header & Stats */}
       <div className="relative z-10 flex-shrink-0 border-b border-white/5 bg-slate-950/20 backdrop-blur-md">
         <div className="flex items-center justify-between max-w-6xl mx-auto px-4 py-3">
           <div className="flex items-center gap-6">
@@ -234,7 +245,6 @@ function PracticePageContent() {
         </div>
       </div>
 
-      {/* Main Practice Area */}
       <div className="relative z-0 flex-1 flex flex-col max-w-5xl mx-auto w-full p-4 min-h-0">
         <LessonIntro
           lesson={lessonProgress.currentLesson}
@@ -255,20 +265,37 @@ function PracticePageContent() {
               </div>
             </div>
 
-            {/* Visual Typing Area */}
             <div
-              className="flex-shrink-0 mb-8 cursor-text"
+              className="flex-shrink-0 mb-8 cursor-text space-y-4"
               onClick={() => inputRef.current?.focus()}
             >
-              <CharacterDisplay
-                targetText={currentLine}
-                typedText={typing.currentLineTyped}
-                jamoIndex={typing.jamoIndex}
-                isCompact={isComplexLine}
-              />
+              {textLines.map((line, lineIndex) => {
+                const isCurrentLine = lineIndex === lessonProgress.currentLineIndex;
+                const isPastLine = lineIndex < lessonProgress.currentLineIndex;
+                const isFutureLine = lineIndex > lessonProgress.currentLineIndex;
+
+                return (
+                  <div
+                    key={lineIndex}
+                    className={`
+                      transition-all duration-300
+                      ${isCurrentLine ? "opacity-100 scale-100" : ""}
+                      ${isPastLine ? "opacity-40 scale-95" : ""}
+                      ${isFutureLine ? "opacity-30 scale-95" : ""}
+                    `}
+                  >
+                    <CharacterDisplay
+                      targetText={line}
+                      typedText={isCurrentLine ? typing.currentLineTyped : isPastLine ? line : ""}
+                      jamoIndex={isCurrentLine ? typing.jamoIndex : 0}
+                      isCompact={line.length > 30}
+                      showCursor={isCurrentLine}
+                    />
+                  </div>
+                );
+              })}
             </div>
 
-            {/* FIXED INPUT */}
             <input
               ref={inputRef}
               type="text"
@@ -303,7 +330,6 @@ function PracticePageContent() {
         )}
       </div>
 
-      {/* WARNING POP-UP COMPONENT */}
       <KeyboardWarning
         isVisible={showWarning}
         onClose={() => setShowWarning(false)}
@@ -316,6 +342,7 @@ function PracticePageContent() {
         onTryAgain={handleTryAgain}
         onNextLesson={lessonProgress.handleNextLesson}
         hasNextLesson={lessonProgress.hasNextLesson}
+        isGuest={!user}
       />
     </div>
   );
@@ -323,8 +350,10 @@ function PracticePageContent() {
 
 export default function PracticePage() {
   return (
-    <Suspense fallback={<div className="bg-slate-950 h-screen w-full" />}>
-      <PracticePageContent />
-    </Suspense>
+    <ErrorBoundary>
+      <Suspense fallback={<div className="bg-slate-950 h-screen w-full" />}>
+        <PracticePageContent />
+      </Suspense>
+    </ErrorBoundary>
   );
 }

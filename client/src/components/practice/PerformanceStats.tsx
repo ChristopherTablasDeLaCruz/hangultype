@@ -1,4 +1,3 @@
-// src/components/practice/PerformanceStats.tsx
 interface PerformanceStatsProps {
   wpm: number;
   accuracy: number;
@@ -12,7 +11,6 @@ export function PerformanceStats({
 }: PerformanceStatsProps) {
   return (
     <div className="flex items-center gap-6 sm:gap-8">
-      {/* WPM */}
       <div className="text-center group">
         <div className="text-2xl font-mono font-bold text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]">
           {wpm}
@@ -22,10 +20,8 @@ export function PerformanceStats({
         </div>
       </div>
 
-      {/* Vertical Divider */}
       <div className="h-8 w-px bg-white/10" />
 
-      {/* Accuracy */}
       <div className="text-center group">
         <div className="text-2xl font-mono font-bold text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]">
           {accuracy}%
@@ -35,10 +31,8 @@ export function PerformanceStats({
         </div>
       </div>
 
-      {/* Vertical Divider */}
       <div className="h-8 w-px bg-white/10" />
 
-      {/* Progress */}
       <div className="text-center group">
         <div className="text-2xl font-mono font-bold text-violet-400 drop-shadow-[0_0_8px_rgba(167,139,250,0.5)]">
           {progress}%

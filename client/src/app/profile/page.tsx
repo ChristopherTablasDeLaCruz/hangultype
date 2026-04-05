@@ -3,14 +3,14 @@
 import { createClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<any>(null);
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-  // Stats State
   const [completedCount, setCompletedCount] = useState(0);
   const [totalLessonCount, setTotalLessonCount] = useState(0);
   const [avgWpm, setAvgWpm] = useState(0);
@@ -22,24 +22,19 @@ export default function ProfilePage() {
   useEffect(() => {
     const initProfile = async () => {
       try {
-        const {
-          data: { user },
-          error,
-        } = await supabase.auth.getUser();
-        if (error || !user) {
+        if (!authLoading && !user) {
           router.push("/login");
           return;
         }
-        setUser(user);
 
-        // 1. Fetch ALL lessons for dynamic count
+        if (!user) return;
+
         const lessonsRes = await fetch(`${API_URL}/lessons`);
         if (lessonsRes.ok) {
           const lessonsData = await lessonsRes.json();
           setTotalLessonCount(lessonsData.length);
         }
 
-        // 2. Fetch User Progress aggregates
         const progressRes = await fetch(`${API_URL}/user/progress/${user.id}`);
         if (progressRes.ok) {
           const data = await progressRes.json();
@@ -54,18 +49,18 @@ export default function ProfilePage() {
       }
     };
 
-    initProfile();
-  }, [router]);
+    if (!authLoading) {
+      initProfile();
+    }
+  }, [user, authLoading, router]);
 
-  if (loading) return null;
+  if (authLoading || loading) return null;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-cyan-500/30 relative overflow-hidden">
-      {/* Background Ambient Glow */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-cyan-500/5 blur-[120px] rounded-full pointer-events-none" />
 
       <main className="pt-12 px-6 max-w-4xl mx-auto relative z-10 pb-20">
-        {/* Navigation */}
         <div className="flex items-center justify-between mb-12">
           <Link
             href="/lessons"
@@ -81,7 +76,6 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Profile Header */}
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">
             Performance Metrics
@@ -92,9 +86,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          {/* Progress Card */}
           <div className="p-6 bg-slate-900/40 border border-white/5 rounded-2xl backdrop-blur-md">
             <div className="text-xs font-mono text-slate-500 uppercase tracking-widest mb-4">
               Modules Completed
@@ -107,7 +99,6 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* WPM Card */}
           <div className="p-6 bg-slate-900/40 border border-white/5 rounded-2xl backdrop-blur-md">
             <div className="text-xs font-mono text-slate-500 uppercase tracking-widest mb-4">
               Avg Speed
@@ -120,7 +111,6 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Accuracy Card */}
           <div className="p-6 bg-slate-900/40 border border-white/5 rounded-2xl backdrop-blur-md">
             <div className="text-xs font-mono text-slate-500 uppercase tracking-widest mb-4">
               Accuracy
@@ -132,7 +122,6 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* "Under Construction" Placeholder */}
         <div className="relative group">
           <div className="absolute inset-0 bg-cyan-500/5 blur-xl rounded-3xl group-hover:bg-cyan-500/10 transition-colors" />
           <div className="relative p-12 bg-slate-900/20 border border-white/5 rounded-3xl border-dashed flex flex-col items-center justify-center text-center">

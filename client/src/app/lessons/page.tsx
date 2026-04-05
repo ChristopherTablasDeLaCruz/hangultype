@@ -1,18 +1,18 @@
-// src/app/lessons/page.tsx
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Lesson } from "@/types/lesson";
+import { Lesson, DBLesson } from "@/types/lesson";
 import { createClient } from "@/utils/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
 export default function LessonsPage() {
+  const { user, loading: authLoading } = useAuth();
   const supabase = createClient();
   const router = useRouter();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-  // --- Data State ---
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +20,6 @@ export default function LessonsPage() {
   const [completedLessons, setCompletedLessons] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
 
-  // --- Auth & Data Fetch ---
   useEffect(() => {
     setMounted(true);
 
@@ -28,36 +27,36 @@ export default function LessonsPage() {
       try {
         setIsLoading(true);
 
-        // 1. Fetch Curriculum
         const res = await fetch(`${API_URL}/lessons`);
         if (!res.ok) throw new Error("Failed to fetch curriculum");
         const dbData = await res.json();
 
-        const formatted: Lesson[] = dbData.map((row: any) => ({
+        const formatted: Lesson[] = dbData.map((row: DBLesson) => ({
           id: row.id,
           title: row.title,
           description: row.description,
-          phase: row.phase,
+          phase: row.phase as Lesson["phase"],
           unit: row.unit,
           lessonNumber: row.lesson_number,
-          difficulty: row.difficulty,
+          difficulty: row.difficulty as Lesson["difficulty"],
           ...row.content_json,
         }));
         setLessons(formatted);
 
-        // 2. Fetch User Progress
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
         if (user) {
-          const progressRes = await fetch(
-            `${API_URL}/user/progress/${user.id}`,
-          );
-          if (progressRes.ok) {
-            const progressData = await progressRes.json();
-            setCompletedLessons(progressData.completed_lessons);
+          try {
+            const progressRes = await fetch(
+              `${API_URL}/user/progress/${user.id}`,
+            );
+            if (progressRes.ok) {
+              const progressData = await progressRes.json();
+              setCompletedLessons(progressData.completed_lessons);
+            }
+          } catch (err) {
+            console.log("Could not fetch progress (not logged in)");
           }
+        } else {
+          console.log("Guest mode: Progress will not be saved");
         }
       } catch (err) {
         console.error(err);
@@ -67,17 +66,17 @@ export default function LessonsPage() {
       }
     }
 
-    initData();
-  }, [supabase.auth]);
+    if (!authLoading) {
+      initData();
+    }
+  }, [user, authLoading]);
 
-  // --- Logout Logic ---
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     router.push("/login");
     router.refresh();
   };
 
-  // --- Helper Functions ---
   const isLessonCompleted = (lesson: Lesson) =>
     completedLessons.includes(lesson.id);
   const progressPercentage =
@@ -104,7 +103,6 @@ export default function LessonsPage() {
     };
   };
 
-  // --- Grouping Logic ---
   const phaseGroups = useMemo(() => {
     return {
       foundation: lessons.filter((l) => l.phase === "foundation"),
@@ -148,8 +146,7 @@ export default function LessonsPage() {
     },
   ];
 
-  // --- Loading State ---
-  if (!mounted || isLoading) {
+  if (!mounted || authLoading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950">
         <div className="text-xl font-mono font-bold text-cyan-400 animate-pulse tracking-widest">
@@ -173,7 +170,28 @@ export default function LessonsPage() {
   return (
     <div className="min-h-screen pb-20 bg-slate-950 text-slate-200 selection:bg-cyan-500/30">
       <main className="max-w-6xl mx-auto px-6 pt-12">
-        {/* Header & User Control Hub */}
+        {!user && (
+          <div className="mb-8 p-4 rounded-xl border border-cyan-500/30 bg-cyan-950/10 backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-700">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1">
+                <h3 className="font-mono font-bold text-cyan-400 text-sm mb-1">
+                  👤 GUEST_MODE
+                </h3>
+                <p className="text-slate-400 text-xs">
+                  You can practice freely, but progress won't be saved. Sign in
+                  to track your stats and completed lessons!
+                </p>
+              </div>
+              <Link
+                href="/login"
+                className="px-4 py-2 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 font-mono text-xs font-bold uppercase tracking-wider hover:bg-cyan-500/30 hover:border-cyan-500/50 transition-all whitespace-nowrap"
+              >
+                Sign In
+              </Link>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
           <div>
             <h1 className="text-4xl font-bold text-white tracking-tighter mb-2">
@@ -184,25 +202,34 @@ export default function LessonsPage() {
             </p>
           </div>
 
-          {/* User Controls */}
           <div className="flex items-center gap-3">
-            <Link
-              href="/profile"
-              className="px-5 py-2.5 rounded-xl bg-slate-900 border border-white/5 text-slate-400 font-mono text-xs font-bold uppercase tracking-wider hover:text-cyan-400 hover:border-cyan-500/30 transition-all shadow-sm"
-            >
-              My Stats
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  href="/profile"
+                  className="px-5 py-2.5 rounded-xl bg-slate-900 border border-white/5 text-slate-400 font-mono text-xs font-bold uppercase tracking-wider hover:text-cyan-400 hover:border-cyan-500/30 transition-all shadow-sm"
+                >
+                  My Stats
+                </Link>
 
-            <button
-              onClick={handleSignOut}
-              className="px-5 py-2.5 rounded-xl bg-slate-900 border border-white/5 text-slate-500 font-mono text-xs font-bold uppercase tracking-wider hover:text-rose-400 hover:border-rose-500/30 transition-all"
-            >
-              Log Out
-            </button>
+                <button
+                  onClick={handleSignOut}
+                  className="px-5 py-2.5 rounded-xl bg-slate-900 border border-white/5 text-slate-500 font-mono text-xs font-bold uppercase tracking-wider hover:text-rose-400 hover:border-rose-500/30 transition-all"
+                >
+                  Log Out
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className="px-5 py-2.5 rounded-xl bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 font-mono text-xs font-bold uppercase tracking-wider hover:bg-cyan-500/30 hover:border-cyan-500/50 transition-all shadow-sm"
+              >
+                Sign In
+              </Link>
+            )}
           </div>
         </div>
 
-        {/* Global Progress Section */}
         <section className="rounded-2xl p-8 mb-16 relative overflow-hidden border border-white/5 bg-slate-900/50 backdrop-blur-sm shadow-xl">
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[100px] rounded-full pointer-events-none" />
 
@@ -228,7 +255,6 @@ export default function LessonsPage() {
           </div>
         </section>
 
-        {/* Phase List */}
         <div className="space-y-20">
           {phaseConfig.map((phase) => {
             const groupLessons =
@@ -240,7 +266,6 @@ export default function LessonsPage() {
                 key={phase.key}
                 className="animate-in fade-in slide-in-from-bottom-8 duration-700"
               >
-                {/* Phase Title */}
                 <div className="flex items-center gap-4 mb-8 border-l-2 border-cyan-500/30 pl-4">
                   <div>
                     <h2 className="text-2xl font-bold text-slate-200">
@@ -252,7 +277,6 @@ export default function LessonsPage() {
                   </div>
                 </div>
 
-                {/* Lesson Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {groupLessons.map((lesson) => {
                     const completed = isLessonCompleted(lesson);
@@ -315,7 +339,6 @@ export default function LessonsPage() {
             );
           })}
 
-          {/* FUTURE SECTORS: 10 Cards */}
           <div className="mt-24 opacity-60 hover:opacity-100 transition-opacity duration-700 animate-in fade-in slide-in-from-bottom-12">
             <div className="flex items-center gap-4 mb-8 border-l-2 border-slate-800 pl-4">
               <div>
@@ -329,7 +352,6 @@ export default function LessonsPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-20">
-              {/* --- ROW 1: WORDS --- */}
               <div className="p-6 rounded-xl border border-white/5 border-dashed bg-slate-900/10 flex flex-col justify-center items-center text-center group cursor-not-allowed">
                 <div className="w-12 h-12 rounded-full bg-slate-900 border border-white/5 flex items-center justify-center mb-4 text-slate-700 group-hover:text-cyan-400 group-hover:border-cyan-500/20 transition-colors">
                   <svg
@@ -426,7 +448,6 @@ export default function LessonsPage() {
                 </p>
               </div>
 
-              {/* --- ROW 2: SENTENCES --- */}
               <div className="p-6 rounded-xl border border-white/5 border-dashed bg-slate-900/10 flex flex-col justify-center items-center text-center group cursor-not-allowed">
                 <div className="w-12 h-12 rounded-full bg-slate-900 border border-white/5 flex items-center justify-center mb-4 text-slate-700 group-hover:text-emerald-400 group-hover:border-emerald-500/20 transition-colors">
                   <svg
@@ -523,7 +544,6 @@ export default function LessonsPage() {
                 </p>
               </div>
 
-              {/* --- ROW 3: CITIES --- */}
               <div className="p-6 rounded-xl border border-white/5 border-dashed bg-slate-900/10 flex flex-col justify-center items-center text-center group cursor-not-allowed">
                 <div className="w-12 h-12 rounded-full bg-slate-900 border border-white/5 flex items-center justify-center mb-4 text-slate-700 group-hover:text-blue-400 group-hover:border-blue-500/20 transition-colors">
                   <svg

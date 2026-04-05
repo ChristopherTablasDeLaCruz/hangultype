@@ -1,5 +1,3 @@
-// src/components/KoreanKeyboard.tsx
-// "Zen UI" Korean Keyboard Component
 "use client";
 
 type KeyboardProps = {
@@ -10,7 +8,6 @@ type KeyboardProps = {
   isCompact?: boolean;
 };
 
-// Korean keyboard layout (Same logic, new style)
 const keyboardRows: string[][] = [
   ["ㅂ", "ㅈ", "ㄷ", "ㄱ", "ㅅ", "ㅛ", "ㅕ", "ㅑ", "ㅐ", "ㅔ"],
   ["ㅁ", "ㄴ", "ㅇ", "ㄹ", "ㅎ", "ㅗ", "ㅓ", "ㅏ", "ㅣ"],
@@ -161,8 +158,6 @@ export default function KoreanKeyboard({
   );
 }
 
-// --- KEY COMPONENTS ---
-
 function KeyButton({
   qwertyChar,
   isActive,
@@ -185,19 +180,15 @@ function KeyButton({
 
   const textSize = isCompact ? "text-sm" : "text-base sm:text-lg";
 
-  // UI State Logic
-  let styleClass = "bg-slate-800 border-slate-700 text-slate-400"; // Default
+  let styleClass = "bg-slate-800 border-slate-700 text-slate-400";
 
   if (isActive) {
-    // Pressed State (Cyan Glow)
     styleClass =
       "bg-cyan-500 border-cyan-400 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.6)] scale-95";
   } else if (isGuided) {
-    // Guide State (Emerald Ring)
     styleClass =
       "bg-slate-800 border-emerald-400 text-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.2)]";
   } else if (isFocused) {
-    // Focused State (Subtle Slate Highlight)
     styleClass = "bg-slate-700 border-slate-600 text-slate-200";
   }
 

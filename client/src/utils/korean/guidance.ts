@@ -1,17 +1,15 @@
-// src/utils/korean/guidance.ts
 import {
   complexVowelSequences,
+  compoundFinalSequences,
   doubleConsonantMappings,
   shiftVowelMappings,
 } from "./mappings";
 import { textToJamoSequence } from "./decomposition";
 
-// Show what to type next for each character type
 export function getGuidanceForCharacter(
   targetChar: string,
   progressInSequence: number = 0,
 ): string[] {
-  // Complex vowels need multiple keystrokes
   if (complexVowelSequences[targetChar]) {
     const sequence = complexVowelSequences[targetChar];
     if (progressInSequence < sequence.length) {
@@ -20,7 +18,14 @@ export function getGuidanceForCharacter(
     return [];
   }
 
-  // Double consonants need shift + base key
+  if (compoundFinalSequences[targetChar]) {
+    const sequence = compoundFinalSequences[targetChar];
+    if (progressInSequence < sequence.length) {
+      return [sequence[progressInSequence]];
+    }
+    return [];
+  }
+
   if (doubleConsonantMappings[targetChar]) {
     if (progressInSequence === 0) {
       return ["shift", doubleConsonantMappings[targetChar].base];
@@ -28,7 +33,6 @@ export function getGuidanceForCharacter(
     return [];
   }
 
-  // Shift vowels work the same way
   if (shiftVowelMappings[targetChar]) {
     if (progressInSequence === 0) {
       return ["shift", shiftVowelMappings[targetChar].base];
@@ -36,16 +40,13 @@ export function getGuidanceForCharacter(
     return [];
   }
 
-  // Regular characters
   return [targetChar];
 }
 
-// Track how far through a complex sequence the user is
 export function getSequenceProgress(
   targetChar: string,
   typedJamo: string[],
 ): number {
-  // Complex vowels - check each part of the sequence
   if (complexVowelSequences[targetChar]) {
     const sequence = complexVowelSequences[targetChar];
     let progress = 0;
@@ -61,7 +62,21 @@ export function getSequenceProgress(
     return progress;
   }
 
-  // Shift characters - either done or not done
+  if (compoundFinalSequences[targetChar]) {
+    const sequence = compoundFinalSequences[targetChar];
+    let progress = 0;
+
+    for (let i = 0; i < sequence.length && i < typedJamo.length; i++) {
+      if (typedJamo[typedJamo.length - sequence.length + i] === sequence[i]) {
+        progress = i + 1;
+      } else {
+        break;
+      }
+    }
+
+    return progress;
+  }
+
   if (doubleConsonantMappings[targetChar] || shiftVowelMappings[targetChar]) {
     return typedJamo.length > 0 &&
       typedJamo[typedJamo.length - 1] === targetChar
@@ -69,13 +84,31 @@ export function getSequenceProgress(
       : 0;
   }
 
-  // Simple characters
   return typedJamo.length > 0 && typedJamo[typedJamo.length - 1] === targetChar
     ? 1
     : 0;
 }
 
-// Main logic for what to suggest next
+// ㅆ and ㄲ have different input methods: Initial = Shift+base, Final = base+base
+function isFinalConsonantPosition(targetJamo: string[], index: number): boolean {
+  if (index < 2) return false;
+
+  const CONSONANTS = ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];
+  const VOWELS = ["ㅏ", "ㅐ", "ㅑ", "ㅒ", "ㅓ", "ㅔ", "ㅕ", "ㅖ", "ㅗ", "ㅘ", "ㅙ", "ㅚ", "ㅛ", "ㅜ", "ㅝ", "ㅞ", "ㅟ", "ㅠ", "ㅡ", "ㅢ", "ㅣ"];
+
+  const current = targetJamo[index];
+  if (!CONSONANTS.includes(current)) return false;
+
+  const prev1 = targetJamo[index - 1];
+  const prev2 = index >= 2 ? targetJamo[index - 2] : undefined;
+
+  if (VOWELS.includes(prev1)) {
+    return true;
+  }
+
+  return false;
+}
+
 export function getSmartGuidance(
   targetJamo: string[],
   jamoIndex: number,
@@ -91,7 +124,6 @@ export function getSmartGuidance(
   const typedJamo = textToJamoSequence(currentTyped);
   const currentPos = jamoIndex;
 
-  // Check if earlier characters are wrong - fix those first
   const targetSoFar = targetJamo.slice(0, currentPos).join("");
   const typedSoFar = typedJamo.slice(0, currentPos).join("");
   if (typedSoFar !== targetSoFar) {
@@ -104,11 +136,9 @@ export function getSmartGuidance(
   const typedAtPos = typedJamo[currentPos];
   const typedNextAtPos = typedJamo[currentPos + 1];
 
-  // Complex vowels need special handling
   if (complexVowelSequences[targetChar]) {
     const [first, second] = complexVowelSequences[targetChar];
 
-    // If locked, force clean restart
     if (lockedMedialIndices.has(idx)) {
       return {
         keys: ["backspace"],
@@ -165,38 +195,125 @@ export function getSmartGuidance(
     };
   }
 
-  // Double consonants
-  if (doubleConsonantMappings[targetChar]) {
-    const base = doubleConsonantMappings[targetChar].base;
+  if (compoundFinalSequences[targetChar]) {
+    const [first, second] = compoundFinalSequences[targetChar];
 
-    if (typedAtPos === undefined) {
-      return shiftPressed
-        ? { keys: [base] }
-        : {
-            keys: ["shift"],
-            message: `Hold Shift, then press ${base} for ${targetChar}`,
-          };
-    }
-    if (typedAtPos === targetChar) return { keys: [] };
-    if (typedAtPos === base) {
-      if (typedNextAtPos && typedNextAtPos !== base) {
-        return {
-          keys: ["backspace"],
-          message: `Backspace and try again for ${targetChar}`,
-        };
-      }
+    if (lockedMedialIndices.has(idx)) {
       return {
-        keys: ["shift", base],
-        message: `Hold Shift and press ${base} for ${targetChar}`,
+        keys: ["backspace"],
+        message: `Backspace until this slot is empty, then type ${first} → ${second} to make ${targetChar}`,
       };
     }
+
+    if (typedAtPos === undefined) {
+      // Nothing typed yet - start with first part
+      return {
+        keys: [first],
+        message: `Type ${first} then ${second} to make ${targetChar}`,
+      };
+    }
+    if (typedAtPos === targetChar) {
+      // Already correct
+      return { keys: [] };
+    }
+
+    // Check for extra jamo that might mess up the IME
+    const expectedJamoCount = currentPos + 1;
+    if (typedJamo.length > expectedJamoCount) {
+      lockIndex(idx);
+      return {
+        keys: ["backspace"],
+        message: `Backspace until this slot is empty, then type ${first} → ${second} to make ${targetChar}`,
+      };
+    }
+
+    if (typedAtPos === first) {
+      // First part is correct
+      if (typedNextAtPos === undefined) {
+        return {
+          keys: [second],
+          message: `Add ${second} to complete ${targetChar}`,
+        };
+      } else if (typedNextAtPos === second) {
+        // Both parts correct, waiting for IME to compose
+        return { keys: [] };
+      } else {
+        // Wrong second part
+        lockIndex(idx);
+        return {
+          keys: ["backspace"],
+          message: `Backspace until this slot is empty, then type ${first} → ${second} to make ${targetChar}`,
+        };
+      }
+    }
+
+    // Wrong first part - start over
     return {
       keys: ["backspace"],
-      message: `Backspace and try again for ${targetChar}`,
+      message: `Backspace until this slot is empty, then type ${first} → ${second} to make ${targetChar}`,
     };
   }
 
-  // Shift vowels
+  if (doubleConsonantMappings[targetChar]) {
+    const base = doubleConsonantMappings[targetChar].base;
+    const isFinal = isFinalConsonantPosition(targetJamo, idx);
+
+    if ((targetChar === "ㅆ" || targetChar === "ㄲ") && isFinal) {
+      if (typedAtPos === undefined) {
+        return {
+          keys: [base],
+          message: `Type ${base} twice to make ${targetChar}`,
+        };
+      }
+      if (typedAtPos === targetChar) return { keys: [] };
+      if (typedAtPos === base) {
+        if (typedNextAtPos === undefined) {
+          return {
+            keys: [base],
+            message: `Type ${base} again to complete ${targetChar}`,
+          };
+        } else if (typedNextAtPos === base) {
+          return { keys: [] };
+        } else {
+          return {
+            keys: ["backspace"],
+            message: `Backspace and type ${base} twice for ${targetChar}`,
+          };
+        }
+      }
+      return {
+        keys: ["backspace"],
+        message: `Backspace and type ${base} twice for ${targetChar}`,
+      };
+    } else {
+      if (typedAtPos === undefined) {
+        return shiftPressed
+          ? { keys: [base] }
+          : {
+              keys: ["shift"],
+              message: `Hold Shift, then press ${base} for ${targetChar}`,
+            };
+      }
+      if (typedAtPos === targetChar) return { keys: [] };
+      if (typedAtPos === base) {
+        if (typedNextAtPos && typedNextAtPos !== base) {
+          return {
+            keys: ["backspace"],
+            message: `Backspace and try again for ${targetChar}`,
+          };
+        }
+        return {
+          keys: ["shift", base],
+          message: `Hold Shift and press ${base} for ${targetChar}`,
+        };
+      }
+      return {
+        keys: ["backspace"],
+        message: `Backspace and try again for ${targetChar}`,
+      };
+    }
+  }
+
   if (shiftVowelMappings[targetChar]) {
     const base = shiftVowelMappings[targetChar].base;
 
@@ -227,7 +344,6 @@ export function getSmartGuidance(
     };
   }
 
-  // Regular jamo
   if (typedAtPos === undefined) return { keys: [targetChar] };
   if (typedAtPos === targetChar) return { keys: [] };
   return {

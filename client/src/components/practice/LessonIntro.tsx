@@ -1,4 +1,3 @@
-// src/components/practice/LessonIntro.tsx
 import { Lesson } from "@/types/lesson";
 
 interface LessonIntroProps {
@@ -23,11 +22,9 @@ export function LessonIntro({
   return (
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
       <div className="relative bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl max-w-2xl w-full p-8 overflow-hidden">
-        {/* Background Glow Effect */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 blur-[100px] rounded-full pointer-events-none" />
 
         <div className="relative z-10">
-          {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-block px-3 py-1 mb-4 rounded-full border border-cyan-500/20 bg-cyan-500/10 text-cyan-400 text-xs font-mono tracking-widest uppercase">
               {lesson.phase} PHASE
@@ -48,7 +45,6 @@ export function LessonIntro({
             </div>
           </div>
 
-          {/* Instructions */}
           <div className="mb-8 bg-slate-950/50 p-6 rounded-xl border border-white/5">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
               Mission Brief
@@ -58,7 +54,6 @@ export function LessonIntro({
             </p>
           </div>
 
-          {/* Focus Keys */}
           {shouldShowFocusKeys && (
             <div className="mb-8">
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 text-center">
@@ -77,7 +72,6 @@ export function LessonIntro({
             </div>
           )}
 
-          {/* Action Button */}
           <div className="text-center">
             <button
               onClick={onStart}

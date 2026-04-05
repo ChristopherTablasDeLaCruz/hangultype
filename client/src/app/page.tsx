@@ -1,4 +1,3 @@
-// src/app/page.tsx
 "use client";
 
 import Link from "next/link";
@@ -8,7 +7,6 @@ export default function Home() {
   const [welcomeText, setWelcomeText] = useState("");
   const fullMessage = "SYSTEM_INITIALIZED: READY_TO_Type_KOREAN...";
 
-  // Reuse the Hangul Rain characters
   const hangulChars = [
     "한",
     "글",
@@ -37,7 +35,6 @@ export default function Home() {
 
   return (
     <main className="relative min-h-screen flex flex-col items-center justify-center bg-slate-950 overflow-hidden">
-      {/* 1. Background Data Rain */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20 z-0">
         {rainDrops.map((_, index) => (
           <div
@@ -55,7 +52,6 @@ export default function Home() {
         ))}
       </div>
 
-      {/* 2. Hero Section */}
       <div className="relative z-10 text-center space-y-8 px-6">
         <div className="space-y-4">
           <div className="inline-block px-3 py-1 rounded-full border border-cyan-500/20 bg-cyan-500/10 text-cyan-400 text-[10px] font-mono tracking-widest uppercase">
@@ -91,7 +87,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* cool footer display */}
       <div className="absolute bottom-12 flex gap-12 text-[10px] font-mono text-slate-700 uppercase tracking-widest">
         <div>
           Status: <span className="text-emerald-500">Stable</span>

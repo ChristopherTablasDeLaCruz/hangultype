@@ -1,4 +1,3 @@
-// src/components/practice/GuidanceMessage.tsx
 interface GuidanceMessageProps {
   message?: string;
 }
@@ -6,7 +5,6 @@ interface GuidanceMessageProps {
 export function GuidanceMessage({ message }: GuidanceMessageProps) {
   return (
     <div className="h-8 flex items-center">
-      {/* Fixed height prevents the typing area from "jumping" when hints appear */}
       {message ? (
         <div
           className="

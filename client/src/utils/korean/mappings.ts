@@ -1,8 +1,5 @@
-// src/utils/korean/mappings.ts
-// How long to flash keys when user presses them
 export const KEY_FLASH_MS = 120;
 
-// Map QWERTY keys to Korean characters for keyboard highlighting
 export const qwertyToKorean: Record<string, string> = {
   KeyQ: "ㅂ",
   KeyW: "ㅈ",
@@ -32,39 +29,49 @@ export const qwertyToKorean: Record<string, string> = {
   KeyM: "ㅡ",
 };
 
-// Complex vowels - what keys to press in sequence
 export const complexVowelSequences: Record<string, string[]> = {
-  ㅢ: ["ㅡ", "ㅣ"], // M + L
-  ㅘ: ["ㅗ", "ㅏ"], // H + K
-  ㅙ: ["ㅗ", "ㅐ"], // H + O
-  ㅚ: ["ㅗ", "ㅣ"], // H + L
-  ㅝ: ["ㅜ", "ㅓ"], // N + J
-  ㅞ: ["ㅜ", "ㅔ"], // N + P
-  ㅟ: ["ㅜ", "ㅣ"], // N + L
+  ㅢ: ["ㅡ", "ㅣ"],
+  ㅘ: ["ㅗ", "ㅏ"],
+  ㅙ: ["ㅗ", "ㅐ"],
+  ㅚ: ["ㅗ", "ㅣ"],
+  ㅝ: ["ㅜ", "ㅓ"],
+  ㅞ: ["ㅜ", "ㅔ"],
+  ㅟ: ["ㅜ", "ㅣ"],
 };
 
-// Double consonants - need shift key
+export const compoundFinalSequences: Record<string, string[]> = {
+  ㄳ: ["ㄱ", "ㅅ"],
+  ㄵ: ["ㄴ", "ㅈ"],
+  ㄶ: ["ㄴ", "ㅎ"],
+  ㄺ: ["ㄹ", "ㄱ"],
+  ㄻ: ["ㄹ", "ㅁ"],
+  ㄼ: ["ㄹ", "ㅂ"],
+  ㄽ: ["ㄹ", "ㅅ"],
+  ㄾ: ["ㄹ", "ㅌ"],
+  ㄿ: ["ㄹ", "ㅍ"],
+  ㅀ: ["ㄹ", "ㅎ"],
+  ㅄ: ["ㅂ", "ㅅ"],
+};
+
 export const doubleConsonantMappings: Record<
   string,
   { base: string; needsShift: boolean }
 > = {
-  ㄲ: { base: "ㄱ", needsShift: true }, // Shift + R
-  ㄸ: { base: "ㄷ", needsShift: true }, // Shift + E
-  ㅃ: { base: "ㅂ", needsShift: true }, // Shift + Q
-  ㅆ: { base: "ㅅ", needsShift: true }, // Shift + T
-  ㅉ: { base: "ㅈ", needsShift: true }, // Shift + W
+  ㄲ: { base: "ㄱ", needsShift: true },
+  ㄸ: { base: "ㄷ", needsShift: true },
+  ㅃ: { base: "ㅂ", needsShift: true },
+  ㅆ: { base: "ㅅ", needsShift: true },
+  ㅉ: { base: "ㅈ", needsShift: true },
 };
 
-// Shift vowels
 export const shiftVowelMappings: Record<
   string,
   { base: string; needsShift: boolean }
 > = {
-  ㅒ: { base: "ㅐ", needsShift: true }, // Shift + O
-  ㅖ: { base: "ㅔ", needsShift: true }, // Shift + P
+  ㅒ: { base: "ㅐ", needsShift: true },
+  ㅖ: { base: "ㅔ", needsShift: true },
 };
 
-// Korean building blocks
 export const CONSONANTS = [
   "ㄱ",
   "ㄲ",
