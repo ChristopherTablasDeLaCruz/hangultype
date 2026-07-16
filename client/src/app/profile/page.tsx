@@ -1,15 +1,14 @@
 "use client";
 
-import { createClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 
 export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   const [completedCount, setCompletedCount] = useState(0);
   const [totalLessonCount, setTotalLessonCount] = useState(0);
@@ -17,31 +16,24 @@ export default function ProfilePage() {
   const [avgAccuracy, setAvgAccuracy] = useState(0);
 
   const router = useRouter();
-  const supabase = createClient();
 
   useEffect(() => {
     const initProfile = async () => {
       try {
-        if (!authLoading && !user) {
+        if (!user) {
           router.push("/login");
           return;
         }
 
-        if (!user) return;
+        const [lessons, progress] = await Promise.all([
+          api.getLessons(),
+          api.getProgress(user.id),
+        ]);
 
-        const lessonsRes = await fetch(`${API_URL}/lessons`);
-        if (lessonsRes.ok) {
-          const lessonsData = await lessonsRes.json();
-          setTotalLessonCount(lessonsData.length);
-        }
-
-        const progressRes = await fetch(`${API_URL}/user/progress/${user.id}`);
-        if (progressRes.ok) {
-          const data = await progressRes.json();
-          setCompletedCount(data.completed_lessons?.length || 0);
-          setAvgWpm(Math.round(data.average_wpm || 0));
-          setAvgAccuracy(Math.round(data.average_accuracy || 0));
-        }
+        setTotalLessonCount(lessons.length);
+        setCompletedCount(progress.completed_lessons?.length || 0);
+        setAvgWpm(Math.round(progress.average_wpm || 0));
+        setAvgAccuracy(Math.round(progress.average_accuracy || 0));
       } catch (err) {
         console.error("Failed to load profile data", err);
       } finally {

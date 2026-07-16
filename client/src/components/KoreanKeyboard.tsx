@@ -74,7 +74,6 @@ export default function KoreanKeyboard({
         {keyboardRows[0].map((koreanChar) => (
           <KeyButton
             key={koreanChar}
-            koreanChar={koreanChar}
             qwertyChar={koreanToQwertyMap[koreanChar]}
             isActive={isKeyActive(koreanChar)}
             isGuided={isKeyGuided(koreanChar)}
@@ -99,7 +98,6 @@ export default function KoreanKeyboard({
         {keyboardRows[1].map((koreanChar) => (
           <KeyButton
             key={koreanChar}
-            koreanChar={koreanChar}
             qwertyChar={koreanToQwertyMap[koreanChar]}
             isActive={isKeyActive(koreanChar)}
             isGuided={isKeyGuided(koreanChar)}
@@ -125,7 +123,6 @@ export default function KoreanKeyboard({
         {keyboardRows[2].map((koreanChar) => (
           <KeyButton
             key={koreanChar}
-            koreanChar={koreanChar}
             qwertyChar={koreanToQwertyMap[koreanChar]}
             isActive={isKeyActive(koreanChar)}
             isGuided={isKeyGuided(koreanChar)}
@@ -166,7 +163,6 @@ function KeyButton({
   displayChar,
   isCompact,
 }: {
-  koreanChar: string;
   qwertyChar: string;
   isActive: boolean;
   isGuided: boolean;
@@ -222,7 +218,6 @@ function SpacebarKey({
 }: {
   isActive: boolean;
   isGuided: boolean;
-  isFocused?: boolean;
   isCompact: boolean;
 }) {
   const width = isCompact ? "w-40 h-8" : "w-64 h-10 sm:h-12";

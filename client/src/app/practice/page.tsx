@@ -27,7 +27,6 @@ function PracticePageContent() {
 
   const textLines = useMemo(() => splitTextIntoLines(targetText, 35), [targetText]);
   const currentLine = textLines[lessonProgress.currentLineIndex] || "";
-  const isComplexLine = currentLine.length > 30;
 
   const currentLineJamo = useMemo(
     () => textToJamoSequence(currentLine),
@@ -46,11 +45,10 @@ function PracticePageContent() {
     getStats,
   } = usePerformanceTracking();
 
-  const [allTypedText, setAllTypedText] = useState("");
   const [isMobile, setIsMobile] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
 
-  const currentStats = getStats(allTypedText + typing.currentLineTyped);
+  const currentStats = getStats();
 
   useEffect(() => {
     if (inputRef.current) {
@@ -70,13 +68,15 @@ function PracticePageContent() {
     return () => window.removeEventListener("click", focusInput);
   }, []);
 
+  const { resetTyping } = typing;
+  const { markLessonComplete, advanceToNextLine } = lessonProgress;
+
   useEffect(() => {
-    typing.resetTyping();
+    resetTyping();
     resetTracking();
-    setAllTypedText("");
     hasSubmittedAttempt.current = false;
     setShowWarning(false);
-  }, [lessonProgress.currentLessonId]);
+  }, [lessonProgress.currentLessonId, resetTyping, resetTracking]);
 
   useEffect(() => {
     const checkIfMobile = () => {
@@ -100,23 +100,19 @@ function PracticePageContent() {
       !hasSubmittedAttempt.current &&
       !lessonProgress.isLoading
     ) {
-      console.log("Lesson Complete! Submitting...");
       hasSubmittedAttempt.current = true;
       endTracking();
       submitAttempt(lessonProgress.currentLessonId);
-
-      if (
-        !lessonProgress.completedLessons.includes(
-          lessonProgress.currentLessonId,
-        )
-      ) {
-        const timer = setTimeout(() => {
-          lessonProgress.markLessonComplete(lessonProgress.currentLessonId);
-        }, 1000);
-        return () => clearTimeout(timer);
-      }
+      markLessonComplete(lessonProgress.currentLessonId);
     }
-  }, [isLessonComplete, lessonProgress, submitAttempt, endTracking]);
+  }, [
+    isLessonComplete,
+    lessonProgress.isLoading,
+    lessonProgress.currentLessonId,
+    markLessonComplete,
+    submitAttempt,
+    endTracking,
+  ]);
 
   useEffect(() => {
     if (
@@ -125,27 +121,30 @@ function PracticePageContent() {
       currentLine !== ""
     ) {
       const timer = setTimeout(() => {
-        lessonProgress.advanceToNextLine();
-        typing.resetTyping();
+        advanceToNextLine();
+        resetTyping();
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [typing.currentLineTyped, currentLine, lessonProgress, typing]);
+  }, [
+    typing.currentLineTyped,
+    currentLine,
+    lessonProgress.currentLineIndex,
+    textLines.length,
+    advanceToNextLine,
+    resetTyping,
+  ]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     startTracking();
-    const newText = typing.handleInputChange(e);
-    setAllTypedText((prev) => {
-      const completedLines = textLines
-        .slice(0, lessonProgress.currentLineIndex)
-        .join(" ");
-      return completedLines + (completedLines ? " " : "") + newText;
-    });
+    typing.handleInputChange(e);
   };
 
   const handleKeyDownWrapper = (e: React.KeyboardEvent<HTMLInputElement>) => {
     const isPhysicalLetterKey = /^Key[A-Z]$/.test(e.code);
-    const isIMEComposing = e.nativeEvent.isComposing || (e.nativeEvent as any).keyCode === 229;
+    // keyCode 229 is the legacy signal for "key handled by IME"
+    const isIMEComposing =
+      e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229;
     const isModifierPressed = e.ctrlKey || e.metaKey || e.altKey;
 
     if (isPhysicalLetterKey && !isIMEComposing && !isModifierPressed) {
@@ -167,7 +166,6 @@ function PracticePageContent() {
     lessonProgress.resetLessonState();
     typing.resetTyping();
     resetTracking();
-    setAllTypedText("");
     hasSubmittedAttempt.current = false;
     setTimeout(() => inputRef.current?.focus(), 100);
   };
@@ -206,8 +204,13 @@ function PracticePageContent() {
     );
   }
 
-  const totalChars = targetText.length || 1;
-  const completedChars = allTypedText.length + typing.currentLineTyped.length;
+  const totalChars =
+    textLines.reduce((sum, line) => sum + line.length, 0) || 1;
+  const completedChars =
+    textLines
+      .slice(0, lessonProgress.currentLineIndex)
+      .reduce((sum, line) => sum + line.length, 0) +
+    typing.currentLineTyped.length;
   const granularProgress = Math.min(
     100,
     Math.round((completedChars / totalChars) * 100),
@@ -287,7 +290,6 @@ function PracticePageContent() {
                     <CharacterDisplay
                       targetText={line}
                       typedText={isCurrentLine ? typing.currentLineTyped : isPastLine ? line : ""}
-                      jamoIndex={isCurrentLine ? typing.jamoIndex : 0}
                       isCompact={line.length > 30}
                       showCursor={isCurrentLine}
                     />

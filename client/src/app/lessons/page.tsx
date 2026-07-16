@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Lesson, DBLesson } from "@/types/lesson";
+import { Lesson } from "@/types/lesson";
+import { api } from "@/lib/api";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 
@@ -11,52 +12,28 @@ export default function LessonsPage() {
   const { user, loading: authLoading } = useAuth();
   const supabase = createClient();
   const router = useRouter();
-  const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [completedLessons, setCompletedLessons] = useState<string[]>([]);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-
     async function initData() {
       try {
         setIsLoading(true);
 
-        const res = await fetch(`${API_URL}/lessons`);
-        if (!res.ok) throw new Error("Failed to fetch curriculum");
-        const dbData = await res.json();
-
-        const formatted: Lesson[] = dbData.map((row: DBLesson) => ({
-          id: row.id,
-          title: row.title,
-          description: row.description,
-          phase: row.phase as Lesson["phase"],
-          unit: row.unit,
-          lessonNumber: row.lesson_number,
-          difficulty: row.difficulty as Lesson["difficulty"],
-          ...row.content_json,
-        }));
-        setLessons(formatted);
+        setLessons(await api.getLessons());
 
         if (user) {
           try {
-            const progressRes = await fetch(
-              `${API_URL}/user/progress/${user.id}`,
-            );
-            if (progressRes.ok) {
-              const progressData = await progressRes.json();
-              setCompletedLessons(progressData.completed_lessons);
-            }
+            const progress = await api.getProgress(user.id);
+            setCompletedLessons(progress.completed_lessons);
           } catch (err) {
-            console.log("Could not fetch progress (not logged in)");
+            // Progress is non-critical; lessons still render without it
+            console.error("Could not fetch progress", err);
           }
-        } else {
-          console.log("Guest mode: Progress will not be saved");
         }
       } catch (err) {
         console.error(err);
@@ -146,7 +123,7 @@ export default function LessonsPage() {
     },
   ];
 
-  if (!mounted || authLoading || isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950">
         <div className="text-xl font-mono font-bold text-cyan-400 animate-pulse tracking-widest">
@@ -178,7 +155,8 @@ export default function LessonsPage() {
                   👤 GUEST_MODE
                 </h3>
                 <p className="text-slate-400 text-xs">
-                  You can practice freely, but progress won't be saved. Sign in
+                  You can practice freely, but progress won&apos;t be saved.
+                  Sign in
                   to track your stats and completed lessons!
                 </p>
               </div>

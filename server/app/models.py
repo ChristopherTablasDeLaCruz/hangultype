@@ -1,10 +1,9 @@
 from pydantic import BaseModel, Field, field_validator
-from typing import Optional, Annotated
+from typing import Annotated
 
 
 class AttemptCreate(BaseModel):
     lesson_id: str
-    user_id: str
     start_time: Annotated[float, Field(gt=0, description="Unix timestamp in milliseconds when typing began")]
     end_time: Annotated[float, Field(gt=0, description="Unix timestamp in milliseconds when typing finished")]
     total_keystrokes: Annotated[int, Field(gt=0, description="Total number of keys pressed (excluding Shift/Tab)")]
@@ -25,7 +24,8 @@ class AttemptCreate(BaseModel):
     @property
     def wpm(self) -> int:
         minutes = self.duration_seconds / 60.0
-        return int((self.total_keystrokes / 5.0) / minutes)
+        # round() to match the client's Math.round display value
+        return round((self.total_keystrokes / 5.0) / minutes)
 
     @property
     def accuracy(self) -> float:

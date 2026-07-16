@@ -272,7 +272,7 @@ export default function LoginPage() {
 
         <div className="mt-4 p-3 rounded-lg bg-slate-950/50 border border-slate-800">
           <p className="text-xs text-slate-500 font-mono text-center">
-            💡 Guest mode: Practice freely. Progress won't be saved.
+            💡 Guest mode: Practice freely. Progress won&apos;t be saved.
           </p>
         </div>
       </div>

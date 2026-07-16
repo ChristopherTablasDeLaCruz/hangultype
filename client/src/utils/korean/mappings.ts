@@ -53,23 +53,19 @@ export const compoundFinalSequences: Record<string, string[]> = {
   ㅄ: ["ㅂ", "ㅅ"],
 };
 
-export const doubleConsonantMappings: Record<
-  string,
-  { base: string; needsShift: boolean }
-> = {
-  ㄲ: { base: "ㄱ", needsShift: true },
-  ㄸ: { base: "ㄷ", needsShift: true },
-  ㅃ: { base: "ㅂ", needsShift: true },
-  ㅆ: { base: "ㅅ", needsShift: true },
-  ㅉ: { base: "ㅈ", needsShift: true },
+// Typed as Shift + base key
+export const doubleConsonantMappings: Record<string, string> = {
+  ㄲ: "ㄱ",
+  ㄸ: "ㄷ",
+  ㅃ: "ㅂ",
+  ㅆ: "ㅅ",
+  ㅉ: "ㅈ",
 };
 
-export const shiftVowelMappings: Record<
-  string,
-  { base: string; needsShift: boolean }
-> = {
-  ㅒ: { base: "ㅐ", needsShift: true },
-  ㅖ: { base: "ㅔ", needsShift: true },
+// Typed as Shift + base key
+export const shiftVowelMappings: Record<string, string> = {
+  ㅒ: "ㅐ",
+  ㅖ: "ㅔ",
 };
 
 export const CONSONANTS = [

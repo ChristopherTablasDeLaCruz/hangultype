@@ -1,4 +1,6 @@
 import {
+  CONSONANTS,
+  VOWELS,
   complexVowelSequences,
   compoundFinalSequences,
   doubleConsonantMappings,
@@ -6,94 +8,15 @@ import {
 } from "./mappings";
 import { textToJamoSequence } from "./decomposition";
 
-export function getGuidanceForCharacter(
-  targetChar: string,
-  progressInSequence: number = 0,
-): string[] {
-  if (complexVowelSequences[targetChar]) {
-    const sequence = complexVowelSequences[targetChar];
-    if (progressInSequence < sequence.length) {
-      return [sequence[progressInSequence]];
-    }
-    return [];
-  }
-
-  if (compoundFinalSequences[targetChar]) {
-    const sequence = compoundFinalSequences[targetChar];
-    if (progressInSequence < sequence.length) {
-      return [sequence[progressInSequence]];
-    }
-    return [];
-  }
-
-  if (doubleConsonantMappings[targetChar]) {
-    if (progressInSequence === 0) {
-      return ["shift", doubleConsonantMappings[targetChar].base];
-    }
-    return [];
-  }
-
-  if (shiftVowelMappings[targetChar]) {
-    if (progressInSequence === 0) {
-      return ["shift", shiftVowelMappings[targetChar].base];
-    }
-    return [];
-  }
-
-  return [targetChar];
-}
-
-export function getSequenceProgress(
-  targetChar: string,
-  typedJamo: string[],
-): number {
-  if (complexVowelSequences[targetChar]) {
-    const sequence = complexVowelSequences[targetChar];
-    let progress = 0;
-
-    for (let i = 0; i < sequence.length && i < typedJamo.length; i++) {
-      if (typedJamo[typedJamo.length - sequence.length + i] === sequence[i]) {
-        progress = i + 1;
-      } else {
-        break;
-      }
-    }
-
-    return progress;
-  }
-
-  if (compoundFinalSequences[targetChar]) {
-    const sequence = compoundFinalSequences[targetChar];
-    let progress = 0;
-
-    for (let i = 0; i < sequence.length && i < typedJamo.length; i++) {
-      if (typedJamo[typedJamo.length - sequence.length + i] === sequence[i]) {
-        progress = i + 1;
-      } else {
-        break;
-      }
-    }
-
-    return progress;
-  }
-
-  if (doubleConsonantMappings[targetChar] || shiftVowelMappings[targetChar]) {
-    return typedJamo.length > 0 &&
-      typedJamo[typedJamo.length - 1] === targetChar
-      ? 1
-      : 0;
-  }
-
-  return typedJamo.length > 0 && typedJamo[typedJamo.length - 1] === targetChar
-    ? 1
-    : 0;
+export interface SmartGuidance {
+  keys: string[];
+  message?: string;
+  /** The current jamo slot is corrupted and must be cleared before retyping. */
+  lockCurrentIndex?: boolean;
 }
 
 // ㅆ and ㄲ have different input methods: Initial = Shift+base, Final = base+base
 function isFinalConsonantPosition(targetJamo: string[], index: number): boolean {
-  const CONSONANTS = ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];
-  const VOWELS = ["ㅏ", "ㅐ", "ㅑ", "ㅒ", "ㅓ", "ㅔ", "ㅕ", "ㅖ", "ㅗ", "ㅘ", "ㅙ", "ㅚ", "ㅛ", "ㅜ", "ㅝ", "ㅞ", "ㅟ", "ㅠ", "ㅡ", "ㅢ", "ㅣ"];
-
   const current = targetJamo[index];
   if (!CONSONANTS.includes(current)) return false;
 
@@ -112,14 +35,63 @@ function isFinalConsonantPosition(targetJamo: string[], index: number): boolean 
   return false;
 }
 
+/**
+ * Guidance for a two-jamo sequence (complex vowels like ㅘ, compound finals
+ * like ㄺ) that the IME composes from two keystrokes.
+ */
+function getSequenceGuidance(
+  targetChar: string,
+  sequence: string[],
+  typedJamo: string[],
+  currentPos: number,
+  isLocked: boolean,
+): SmartGuidance {
+  const [first, second] = sequence;
+  const restartMessage = `Backspace until this slot is empty, then type ${first} → ${second} to make ${targetChar}`;
+
+  if (isLocked) {
+    return { keys: ["backspace"], message: restartMessage };
+  }
+
+  const typedAtPos = typedJamo[currentPos];
+
+  if (typedAtPos === undefined) {
+    // Nothing typed yet - start with first part
+    return {
+      keys: [first],
+      message: `Type ${first} then ${second} to make ${targetChar}`,
+    };
+  }
+  if (typedAtPos === targetChar) {
+    // Already correct
+    return { keys: [] };
+  }
+
+  // Extra jamo would corrupt the IME composition
+  const expectedJamoCount = currentPos + 1;
+  if (typedJamo.length > expectedJamoCount) {
+    return { keys: ["backspace"], message: restartMessage, lockCurrentIndex: true };
+  }
+
+  if (typedAtPos === first) {
+    // First part is correct (no extra jamo can follow — handled above)
+    return {
+      keys: [second],
+      message: `Add ${second} to complete ${targetChar}`,
+    };
+  }
+
+  // Wrong first part - start over
+  return { keys: ["backspace"], message: restartMessage };
+}
+
 export function getSmartGuidance(
   targetJamo: string[],
   jamoIndex: number,
   currentTyped: string,
   shiftPressed: boolean,
   lockedMedialIndices: Set<number>,
-  lockIndex: (i: number) => void,
-): { keys: string[]; message?: string } {
+): SmartGuidance {
   if (jamoIndex >= targetJamo.length) return { keys: [] };
 
   const idx = jamoIndex;
@@ -128,14 +100,14 @@ export function getSmartGuidance(
   const currentPos = jamoIndex;
 
   for (let i = 0; i < currentPos; i++) {
-    const targetChar = targetJamo[i];
+    const earlierTarget = targetJamo[i];
     const typedChar = typedJamo[i];
 
     if (typedChar === undefined) continue;
-    if (typedChar !== targetChar) {
+    if (typedChar !== earlierTarget) {
       const isPartialMatch =
-        (complexVowelSequences[targetChar] && complexVowelSequences[targetChar][0] === typedChar) ||
-        (compoundFinalSequences[targetChar] && compoundFinalSequences[targetChar][0] === typedChar);
+        (complexVowelSequences[earlierTarget] && complexVowelSequences[earlierTarget][0] === typedChar) ||
+        (compoundFinalSequences[earlierTarget] && compoundFinalSequences[earlierTarget][0] === typedChar);
 
       if (!isPartialMatch) {
         return {
@@ -146,129 +118,23 @@ export function getSmartGuidance(
     }
   }
 
+  const sequence =
+    complexVowelSequences[targetChar] ?? compoundFinalSequences[targetChar];
+  if (sequence) {
+    return getSequenceGuidance(
+      targetChar,
+      sequence,
+      typedJamo,
+      currentPos,
+      lockedMedialIndices.has(idx),
+    );
+  }
+
   const typedAtPos = typedJamo[currentPos];
   const typedNextAtPos = typedJamo[currentPos + 1];
 
-  if (complexVowelSequences[targetChar]) {
-    const [first, second] = complexVowelSequences[targetChar];
-
-    if (lockedMedialIndices.has(idx)) {
-      return {
-        keys: ["backspace"],
-        message: `Backspace until this slot is empty, then type ${first} → ${second} to make ${targetChar}`,
-      };
-    }
-
-    if (typedAtPos === undefined) {
-      // Nothing typed yet - start with first part
-      return {
-        keys: [first],
-        message: `Type ${first} then ${second} to make ${targetChar}`,
-      };
-    }
-    if (typedAtPos === targetChar) {
-      // Already correct
-      return { keys: [] };
-    }
-
-    // Check for extra jamo that might mess up the IME
-    const expectedJamoCount = currentPos + 1;
-    if (typedJamo.length > expectedJamoCount) {
-      lockIndex(idx);
-      return {
-        keys: ["backspace"],
-        message: `Backspace until this slot is empty, then type ${first} → ${second} to make ${targetChar}`,
-      };
-    }
-
-    if (typedAtPos === first) {
-      // First part is correct
-      if (typedNextAtPos === undefined) {
-        return {
-          keys: [second],
-          message: `Add ${second} to complete ${targetChar}`,
-        };
-      } else if (typedNextAtPos === second) {
-        // Both parts correct, waiting for IME to compose
-        return { keys: [] };
-      } else {
-        // Wrong second part
-        lockIndex(idx);
-        return {
-          keys: ["backspace"],
-          message: `Backspace until this slot is empty, then type ${first} → ${second} to make ${targetChar}`,
-        };
-      }
-    }
-
-    // Wrong first part - start over
-    return {
-      keys: ["backspace"],
-      message: `Backspace until this slot is empty, then type ${first} → ${second} to make ${targetChar}`,
-    };
-  }
-
-  if (compoundFinalSequences[targetChar]) {
-    const [first, second] = compoundFinalSequences[targetChar];
-
-    if (lockedMedialIndices.has(idx)) {
-      return {
-        keys: ["backspace"],
-        message: `Backspace until this slot is empty, then type ${first} → ${second} to make ${targetChar}`,
-      };
-    }
-
-    if (typedAtPos === undefined) {
-      // Nothing typed yet - start with first part
-      return {
-        keys: [first],
-        message: `Type ${first} then ${second} to make ${targetChar}`,
-      };
-    }
-    if (typedAtPos === targetChar) {
-      // Already correct
-      return { keys: [] };
-    }
-
-    // Check for extra jamo that might mess up the IME
-    const expectedJamoCount = currentPos + 1;
-    if (typedJamo.length > expectedJamoCount) {
-      lockIndex(idx);
-      return {
-        keys: ["backspace"],
-        message: `Backspace until this slot is empty, then type ${first} → ${second} to make ${targetChar}`,
-      };
-    }
-
-    if (typedAtPos === first) {
-      // First part is correct
-      if (typedNextAtPos === undefined) {
-        return {
-          keys: [second],
-          message: `Add ${second} to complete ${targetChar}`,
-        };
-      } else if (typedNextAtPos === second) {
-        // Both parts correct, waiting for IME to compose
-        return { keys: [] };
-      } else {
-        // Wrong second part
-        lockIndex(idx);
-        return {
-          keys: ["backspace"],
-          message: `Backspace until this slot is empty, then type ${first} → ${second} to make ${targetChar}`,
-        };
-      }
-    }
-
-    // Wrong first part - start over
-    return {
-      keys: ["backspace"],
-      message: `Backspace until this slot is empty, then type ${first} → ${second} to make ${targetChar}`,
-    };
-  }
-
   if (doubleConsonantMappings[targetChar]) {
-    const base = doubleConsonantMappings[targetChar].base;
+    const base = doubleConsonantMappings[targetChar];
     const isFinal = isFinalConsonantPosition(targetJamo, idx);
 
     if ((targetChar === "ㅆ" || targetChar === "ㄲ") && isFinal) {
@@ -328,7 +194,7 @@ export function getSmartGuidance(
   }
 
   if (shiftVowelMappings[targetChar]) {
-    const base = shiftVowelMappings[targetChar].base;
+    const base = shiftVowelMappings[targetChar];
 
     if (typedAtPos === undefined) {
       return shiftPressed

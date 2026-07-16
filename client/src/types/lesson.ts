@@ -31,27 +31,3 @@ export interface Lesson {
 
   difficulty: 1 | 2 | 3 | 4 | 5;
 }
-
-export interface LessonAttempt {
-  timestamp: Date;
-  wpm: number;
-  accuracy: number;
-  completionTime: number;
-}
-
-export interface LessonProgress {
-  lessonId: string;
-  attempts: LessonAttempt[];
-  completed: boolean;
-  lastAttempt?: Date;
-}
-
-export interface UserProgress {
-  completedLessons: string[];
-  lessonProgress: Record<string, LessonProgress>;
-  overallStats: {
-    totalPracticeTime: number;
-    averageWpm: number;
-    averageAccuracy: number;
-  };
-}

@@ -9,7 +9,6 @@ import { textToJamoSequence } from "@/utils/korean/decomposition";
 interface CharacterDisplayProps {
   targetText: string;
   typedText: string;
-  jamoIndex: number;
   isCompact?: boolean;
   showCursor?: boolean;
 }
@@ -38,10 +37,10 @@ export function CharacterDisplay({
       return typedChar === first;
     }
     if (doubleConsonantMappings[targetChar]) {
-      return doubleConsonantMappings[targetChar].base === typedChar;
+      return doubleConsonantMappings[targetChar] === typedChar;
     }
     if (shiftVowelMappings[targetChar]) {
-      return shiftVowelMappings[targetChar].base === typedChar;
+      return shiftVowelMappings[targetChar] === typedChar;
     }
 
     const targetJamo = textToJamoSequence(targetChar);
@@ -81,13 +80,13 @@ export function CharacterDisplay({
       }
     }
     if (doubleConsonantMappings[targetChar]) {
-      const base = doubleConsonantMappings[targetChar].base;
+      const base = doubleConsonantMappings[targetChar];
       if (current === base) {
         if (next !== undefined && next !== targetChar) return true;
       }
     }
     if (shiftVowelMappings[targetChar]) {
-      const base = shiftVowelMappings[targetChar].base;
+      const base = shiftVowelMappings[targetChar];
       if (current === base) {
         if (next !== undefined && next !== targetChar) return true;
       }

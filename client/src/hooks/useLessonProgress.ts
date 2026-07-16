@@ -1,13 +1,13 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Lesson, DBLesson } from "@/types/lesson";
+import { Lesson } from "@/types/lesson";
+import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 
 export function useLessonProgress() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user } = useAuth();
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -24,46 +24,25 @@ export function useLessonProgress() {
   const [currentLineIndex, setCurrentLineIndex] = useState(0);
 
   useEffect(() => {
-    async function fetchLessons() {
-      try {
-        const res = await fetch(`${API_URL}/lessons`);
-        const dbData = await res.json();
-        const formatted: Lesson[] = dbData.map((row: DBLesson) => ({
-          id: row.id,
-          title: row.title,
-          description: row.description,
-          phase: row.phase as Lesson["phase"],
-          unit: row.unit,
-          lessonNumber: row.lesson_number,
-          difficulty: row.difficulty as Lesson["difficulty"],
-          ...row.content_json,
-        }));
-        setLessons(formatted);
-      } catch (err) {
-        setError("Failed to load lessons");
-      }
-    }
-    fetchLessons();
+    api
+      .getLessons()
+      .then(setLessons)
+      .catch(() => setError("Failed to load lessons"));
   }, []);
 
   useEffect(() => {
     async function syncProgress() {
       if (user) {
-        console.log("🔄 Syncing progress for user:", user.id);
         try {
-          const res = await fetch(`${API_URL}/user/progress/${user.id}`);
-          if (res.ok) {
-            const data = await res.json();
-            console.log("✅ Cloud progress received:", data.completed_lessons);
-            setCompletedLessons(data.completed_lessons);
-          }
+          const data = await api.getProgress(user.id);
+          setCompletedLessons(data.completed_lessons);
         } catch (err) {
-          console.error("❌ Cloud sync failed", err);
+          console.error("Cloud sync failed", err);
         } finally {
           setIsLoading(false);
         }
       } else {
-        console.log("👤 Guest mode: Progress will not be saved");
+        // Guest mode: progress is not saved
         setIsLoading(false);
       }
     }
@@ -77,22 +56,25 @@ export function useLessonProgress() {
     return lessons.find((l) => l.id === currentLessonId) || lessons[0];
   }, [lessons, currentLessonId]);
 
-  const markLessonComplete = (lessonId: string) => {
-    if (!completedLessons.includes(lessonId)) {
-      setCompletedLessons((prev) => [...prev, lessonId]);
-    }
-  };
+  const markLessonComplete = useCallback((lessonId: string) => {
+    setCompletedLessons((prev) =>
+      prev.includes(lessonId) ? prev : [...prev, lessonId],
+    );
+  }, []);
 
-  const resetLessonState = () => {
+  const resetLessonState = useCallback(() => {
     setCurrentLineIndex(0);
     setShowLessonIntro(true);
-  };
+  }, []);
 
-  const switchToLesson = (lessonId: string) => {
-    setCurrentLessonId(lessonId);
-    router.push(`/practice?lesson=${lessonId}`);
-    resetLessonState();
-  };
+  const switchToLesson = useCallback(
+    (lessonId: string) => {
+      setCurrentLessonId(lessonId);
+      router.push(`/practice?lesson=${lessonId}`);
+      resetLessonState();
+    },
+    [router, resetLessonState],
+  );
 
   const handleNextLesson = () => {
     const currentIndex = lessons.findIndex((l) => l.id === currentLessonId);
@@ -113,9 +95,9 @@ export function useLessonProgress() {
     return currentIndex < lessons.length - 1;
   };
 
-  const advanceToNextLine = () => {
+  const advanceToNextLine = useCallback(() => {
     setCurrentLineIndex((prev) => prev + 1);
-  };
+  }, []);
 
   return {
     isLoading,

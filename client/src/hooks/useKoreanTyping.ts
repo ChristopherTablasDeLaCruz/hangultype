@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect, useCallback } from "react";
 import {
   qwertyToKorean,
   complexVowelSequences,
@@ -6,11 +6,7 @@ import {
   KEY_FLASH_MS,
 } from "@/utils/korean/mappings";
 import { textToJamoSequence } from "@/utils/korean/decomposition";
-import {
-  getSmartGuidance,
-  getGuidanceForCharacter,
-  getSequenceProgress,
-} from "@/utils/korean/guidance";
+import { getSmartGuidance } from "@/utils/korean/guidance";
 
 export function useKoreanTyping(
   currentLine: string,
@@ -28,26 +24,23 @@ export function useKoreanTyping(
   const flashTimeouts = useRef<Record<string, number>>({});
 
   // Prevents IME corruption
-  const lockIndex = (i: number) => {
+  const lockIndex = useCallback((i: number) => {
     setLockedMedialIndices((prev) => {
+      if (prev.has(i)) return prev;
       const next = new Set(prev);
       next.add(i);
       return next;
     });
-  };
+  }, []);
 
-  const unlockIndex = (i: number) => {
+  const unlockIndex = useCallback((i: number) => {
     setLockedMedialIndices((prev) => {
       if (!prev.has(i)) return prev;
       const next = new Set(prev);
       next.delete(i);
       return next;
     });
-  };
-
-  const clearAllLocks = () => {
-    setLockedMedialIndices(new Set());
-  };
+  }, []);
 
   const flashKey = (jamo: string) => {
     setActiveKeys((prev) => (prev.includes(jamo) ? prev : [...prev, jamo]));
@@ -67,7 +60,6 @@ export function useKoreanTyping(
       currentLineTyped,
       shiftPressed,
       lockedMedialIndices,
-      lockIndex,
     );
   }, [
     currentLineJamo,
@@ -76,6 +68,14 @@ export function useKoreanTyping(
     shiftPressed,
     lockedMedialIndices,
   ]);
+
+  // Apply locks outside of render: getSmartGuidance is pure and only reports
+  // that the current slot needs locking.
+  useEffect(() => {
+    if (smartGuidance.lockCurrentIndex) {
+      lockIndex(jamoIndex);
+    }
+  }, [smartGuidance.lockCurrentIndex, jamoIndex, lockIndex]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Shift") {
@@ -93,21 +93,6 @@ export function useKoreanTyping(
     const koreanKey = qwertyToKorean[e.code];
     if (koreanKey) {
       flashKey(koreanKey);
-
-      const expected = currentLineJamo[jamoIndex];
-      if (expected && expected !== " ") {
-        const typedJamo = textToJamoSequence(currentLineTyped);
-        const expectedGuidance = getGuidanceForCharacter(
-          expected,
-          getSequenceProgress(expected, typedJamo),
-        );
-
-        if (
-          expectedGuidance.includes(koreanKey) ||
-          (shiftPressed && expectedGuidance.includes("shift"))
-        ) {
-        }
-      }
     }
   };
 
@@ -135,7 +120,6 @@ export function useKoreanTyping(
 
     const newText = e.target.value;
     const wasBackspace = newText.length < currentLineTyped.length;
-    const oldText = currentLineTyped;
 
     setCurrentLineTyped(newText);
 
@@ -192,16 +176,14 @@ export function useKoreanTyping(
         }
       }
     }
-
-    return newText;
   };
 
-  const resetTyping = () => {
+  const resetTyping = useCallback(() => {
     setCurrentLineTyped("");
     setJamoIndex(0);
     setActiveKeys([]);
-    clearAllLocks();
-  };
+    setLockedMedialIndices(new Set());
+  }, []);
 
   return {
     currentLineTyped,
@@ -214,6 +196,5 @@ export function useKoreanTyping(
     handleKeyUp,
     handleInputChange,
     resetTyping,
-    clearAllLocks,
   };
 }

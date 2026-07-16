@@ -1,11 +1,4 @@
-import {
-  CONSONANTS,
-  VOWELS,
-  FINALS,
-  complexVowelSequences,
-  doubleConsonantMappings,
-  shiftVowelMappings,
-} from "./mappings";
+import { CONSONANTS, VOWELS, FINALS } from "./mappings";
 
 // syllable = 0xAC00 + (initialIndex × 588) + (vowelIndex × 28) + finalIndex
 export function breakDownSyllable(char: string): string[] {

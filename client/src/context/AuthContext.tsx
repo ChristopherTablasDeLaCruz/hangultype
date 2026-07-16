@@ -45,7 +45,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+    // createBrowserClient returns a singleton, so supabase.auth is stable
+  }, [supabase.auth]);
 
   return (
     <AuthContext.Provider value={{ user, loading }}>
